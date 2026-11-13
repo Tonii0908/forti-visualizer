@@ -134,7 +134,8 @@ def test_xss_texts_are_shown_as_text(open_report):
     assert "</script><img src=x onerror=alert(1)>" in cells
     assert "<img src=x onerror=alert(5)>" in cells
     assert '"><svg onload=alert(2)>' in cells
-    assert page.page.locator("img, svg, iframe").count() == 0
+    assert page.page.locator("img, iframe, svg:not(.diagram)").count() == 0  # only the zone diagram is an SVG
+    assert page.page.locator("svg.diagram [onload], svg.diagram script").count() == 0
     page.view("interfaces")
     assert "<b>{{ 7*7 }}</b>" in page.page.locator("#view-interfaces").inner_text()
 
@@ -373,3 +374,14 @@ def test_large_backup_opens_quickly(browser, tmp_path):
         assert rules_seconds < 3
     finally:
         page.close()
+
+
+def test_zone_diagram_is_drawn(open_report):
+    page = open_report("res_matrix.conf")
+    page.view("diagram")
+    svg = page.page.locator("#view-diagram svg")
+    assert svg.count() == 1
+    box = svg.bounding_box()
+    assert box and box["width"] > 600 and box["height"] > 150
+    assert page.page.locator("#view-diagram path.edge").count() == 8  # one curve per cell and kind
+    assert page.page.locator("#view-diagram g.node").count() == 7

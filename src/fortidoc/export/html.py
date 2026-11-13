@@ -29,6 +29,7 @@ from markupsafe import Markup
 from fortidoc import __version__
 from fortidoc.core.analyzer import CATEGORIES, count_by_category, zone_matrix
 from fortidoc.core.resolver import value_interval
+from fortidoc.export.diagram import zone_diagram
 from fortidoc.export.common import (
     ADDRESS_COLUMNS,
     COVERAGE_COLUMNS,
@@ -346,6 +347,8 @@ def render_report(resolved: ResolvedConfig, findings: list[Finding], created_at:
         counts=data["counts"],
         total_findings=len(findings),
         local_in_count=len(data["localIn"]),
+        diagrams=[zone_diagram(m) for m in zone_matrix(resolved)],
+        multi_vdom=data["multiVdom"],
         search_notice=SEARCH_NOTICE,
         first_match_notice=FIRST_MATCH_NOTICE,
         csp=Markup(content_security_policy()),

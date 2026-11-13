@@ -42,6 +42,7 @@
 <nav class="tabs no-print" aria-label="Ansichten">
   <button type="button" data-view="overview">Übersicht</button>
   <button type="button" data-view="matrix">Zonen-Matrix</button>
+  <button type="button" data-view="diagram">Zonen-Diagramm</button>
   <button type="button" data-view="rules">Regeln</button>
   <button type="button" data-view="localin">Local-In <span class="count">{{ local_in_count }}</span></button>
   <button type="button" data-view="addresses">Adressen</button>
@@ -90,6 +91,35 @@
     <p class="hint">Zeilen sind Quellzonen, Spalten Zielzonen. Zellen zählen aktive Regeln je Action, deaktivierte Regeln stehen grau daneben. Eine Regel mit mehreren Zonen zählt in jeder Kombination. „any“ ist eine eigene Zeile und Spalte, das implizite Deny ist nicht enthalten. Klick auf eine Zelle listet ihre Regeln.</p>
     <div id="matrix" class="scroll"></div>
     <div id="matrix-rules"></div>
+  </section>
+
+  <section id="view-diagram" class="view" hidden>
+    <h2>Zonen-Diagramm</h2>
+    <p class="hint">Links Quellzonen, rechts Zielzonen, in der Reihenfolge der Zonen-Matrix. Jede Linie steht für die Regeln einer Zonen-Kombination; die Linienstärke wächst mit der Zahl der Regeln. Der Mauszeiger über einer Linie zeigt Anzahl und Positionen. Local-In-Regeln und das implizite Deny sind nicht enthalten.</p>
+    <p class="legend"><span class="n-accept">━ Accept</span> <span class="n-deny">━ Deny</span> <span class="n-other">━ Sonstige</span> <span class="n-disabled">┅ deaktiviert</span></p>
+{% for d in diagrams %}
+    <div class="diagram-block">
+{% if multi_vdom %}
+      <h3>VDOM {{ d.vdom }}</h3>
+{% endif %}
+{% if d.edges %}
+      <div class="scroll">
+        <svg class="diagram" viewBox="0 0 {{ d.width }} {{ d.height }}" width="{{ d.width }}" height="{{ d.height }}" role="img" aria-label="Zonen-Diagramm{% if multi_vdom %} VDOM {{ d.vdom }}{% endif %}">
+          <text class="col-head" x="{{ d.sources[0].x if d.sources else 0 }}" y="16">Quellzone</text>
+          <text class="col-head" x="{{ d.targets[0].x if d.targets else 0 }}" y="16">Zielzone</text>
+{% for kind, path, width, title in d.strands %}
+          <path class="edge {{ kind }}" d="{{ path }}" stroke-width="{{ width }}"><title>{{ title }}</title></path>
+{% endfor %}
+{% for n in d.sources + d.targets %}
+          <g class="node{% if n.name == 'any' %} any{% endif %}"><title>{{ n.name }}</title><rect x="{{ n.x }}" y="{{ n.y }}" width="{{ n.width }}" height="{{ n.height }}" rx="4"></rect><text x="{{ n.text_x }}" y="{{ n.text_y }}">{{ n.label }}</text></g>
+{% endfor %}
+        </svg>
+      </div>
+{% else %}
+      <p class="empty">Keine Regeln{% if multi_vdom %} in VDOM {{ d.vdom }}{% endif %}.</p>
+{% endif %}
+    </div>
+{% endfor %}
   </section>
 
   <section id="view-rules" class="view" hidden>
