@@ -274,6 +274,7 @@ def build_report_data(resolved: ResolvedConfig, findings: list[Finding], created
     services = _Interner()
     policies = [_policy(p, values, services) for vdom in resolved.vdoms for p in vdom.policies]
     local_in = [_policy(p, values, services) for vdom in resolved.vdoms for p in vdom.local_in]
+    inspection = [_policy(p, values, services) for vdom in resolved.vdoms for p in vdom.inspection]
     matrices = [
         {
             "vdom": m.vdom,
@@ -297,6 +298,7 @@ def build_report_data(resolved: ResolvedConfig, findings: list[Finding], created
         "svcs": services.items,
         "policies": policies,
         "localIn": local_in,
+        "inspection": inspection,
         "matrices": matrices,
         "tables": {
             "addresses": table(ADDRESS_COLUMNS, address_rows(resolved)),
@@ -347,6 +349,7 @@ def render_report(resolved: ResolvedConfig, findings: list[Finding], created_at:
         counts=data["counts"],
         total_findings=len(findings),
         local_in_count=len(data["localIn"]),
+        inspection_count=len(data["inspection"]),
         diagrams=[zone_diagram(m) for m in zone_matrix(resolved)],
         multi_vdom=data["multiVdom"],
         search_notice=SEARCH_NOTICE,

@@ -50,7 +50,10 @@
       "name": "root",
       "central_nat": false,
       "opmode": "nat",
-      "notes": [],
+      "ngfw_mode": "policy-based",
+      "notes": [
+        "NGFW-Modus richtlinienbasiert: Das Regelwerk besteht aus den Security-Policies. Die Einträge in firewall policy steuern SSL-Inspection und Authentifizierung und stehen in einer eigenen Tabelle."
+      ],
       "zones": [
         {
           "name": "port1",
@@ -74,137 +77,9 @@
       "policies": [
         {
           "vdom": "root",
-          "section": "firewall policy",
-          "position": 1,
-          "policy_id": "1",
-          "implicit": false,
-          "name": "ssl-inspection",
-          "uuid": null,
-          "status": "enable",
-          "enabled": true,
-          "action": "accept",
-          "ip_version": "4",
-          "src_interfaces": [
-            {
-              "name": "port1",
-              "kind": "interface",
-              "zone": "port1",
-              "vdom": "root"
-            }
-          ],
-          "dst_interfaces": [
-            {
-              "name": "port2",
-              "kind": "interface",
-              "zone": "port2",
-              "vdom": "root"
-            }
-          ],
-          "src_zones": [
-            "port1"
-          ],
-          "dst_zones": [
-            "port2"
-          ],
-          "source": {
-            "objects": [
-              "all"
-            ],
-            "objects6": [],
-            "negate": false,
-            "internet_services": [],
-            "values": [
-              {
-                "kind": "network",
-                "value": "0.0.0.0/0",
-                "ip_version": 4,
-                "origin": [
-                  "all"
-                ],
-                "note": null,
-                "vip": null,
-                "from_default": false,
-                "reason": null
-              }
-            ]
-          },
-          "destination": {
-            "objects": [
-              "all"
-            ],
-            "objects6": [],
-            "negate": false,
-            "internet_services": [],
-            "values": [
-              {
-                "kind": "network",
-                "value": "0.0.0.0/0",
-                "ip_version": 4,
-                "origin": [
-                  "all"
-                ],
-                "note": null,
-                "vip": null,
-                "from_default": false,
-                "reason": null
-              }
-            ]
-          },
-          "service": {
-            "objects": [
-              "ALL"
-            ],
-            "negate": false,
-            "entries": [
-              {
-                "kind": "ip",
-                "protocol": "IP",
-                "value": "IP alle Protokolle",
-                "dst_ports": null,
-                "src_ports": null,
-                "icmp_type": null,
-                "icmp_code": null,
-                "protocol_number": 0,
-                "origin": [
-                  "ALL"
-                ],
-                "note": null
-              }
-            ]
-          },
-          "nat": {
-            "enabled": false,
-            "ippool": false,
-            "pools": [],
-            "mode": "none"
-          },
-          "users": [],
-          "groups": [],
-          "schedule": "always",
-          "logtraffic": "utm",
-          "profiles": {
-            "ssl-ssh-profile": "certificate-inspection"
-          },
-          "applications": [],
-          "comments": null,
-          "line": 39,
-          "notes": [],
-          "defaults_applied": [
-            "srcaddr-negate",
-            "internet-service-src",
-            "dstaddr-negate",
-            "internet-service",
-            "service-negate",
-            "nat",
-            "status",
-            "logtraffic"
-          ],
-          "unknown_keys": {}
-        },
-        {
-          "vdom": "root",
+          "table": "policy",
           "section": "firewall security-policy",
-          "position": 2,
+          "position": 1,
           "policy_id": "1",
           "implicit": false,
           "name": "web-apps",
@@ -334,8 +209,9 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall security-policy",
-          "position": 3,
+          "position": 2,
           "policy_id": "2",
           "implicit": false,
           "name": "old-style-v4",
@@ -465,8 +341,9 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall security-policy",
-          "position": 4,
+          "position": 3,
           "policy_id": "3",
           "implicit": false,
           "name": "lan-https",
@@ -591,8 +468,9 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall security-policy",
-          "position": 5,
+          "position": 4,
           "policy_id": "4",
           "implicit": false,
           "name": "lan-https-app",
@@ -721,8 +599,9 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "implicit",
-          "position": 6,
+          "position": 5,
           "policy_id": "0",
           "implicit": true,
           "name": "Implizites Deny",
@@ -829,6 +708,138 @@
         }
       ],
       "local_in": [],
+      "inspection": [
+        {
+          "vdom": "root",
+          "table": "inspection",
+          "section": "firewall policy",
+          "position": 1,
+          "policy_id": "1",
+          "implicit": false,
+          "name": "ssl-inspection",
+          "uuid": null,
+          "status": "enable",
+          "enabled": true,
+          "action": "accept",
+          "ip_version": "4",
+          "src_interfaces": [
+            {
+              "name": "port1",
+              "kind": "interface",
+              "zone": "port1",
+              "vdom": "root"
+            }
+          ],
+          "dst_interfaces": [
+            {
+              "name": "port2",
+              "kind": "interface",
+              "zone": "port2",
+              "vdom": "root"
+            }
+          ],
+          "src_zones": [
+            "port1"
+          ],
+          "dst_zones": [
+            "port2"
+          ],
+          "source": {
+            "objects": [
+              "all"
+            ],
+            "objects6": [],
+            "negate": false,
+            "internet_services": [],
+            "values": [
+              {
+                "kind": "network",
+                "value": "0.0.0.0/0",
+                "ip_version": 4,
+                "origin": [
+                  "all"
+                ],
+                "note": null,
+                "vip": null,
+                "from_default": false,
+                "reason": null
+              }
+            ]
+          },
+          "destination": {
+            "objects": [
+              "all"
+            ],
+            "objects6": [],
+            "negate": false,
+            "internet_services": [],
+            "values": [
+              {
+                "kind": "network",
+                "value": "0.0.0.0/0",
+                "ip_version": 4,
+                "origin": [
+                  "all"
+                ],
+                "note": null,
+                "vip": null,
+                "from_default": false,
+                "reason": null
+              }
+            ]
+          },
+          "service": {
+            "objects": [
+              "ALL"
+            ],
+            "negate": false,
+            "entries": [
+              {
+                "kind": "ip",
+                "protocol": "IP",
+                "value": "IP alle Protokolle",
+                "dst_ports": null,
+                "src_ports": null,
+                "icmp_type": null,
+                "icmp_code": null,
+                "protocol_number": 0,
+                "origin": [
+                  "ALL"
+                ],
+                "note": null
+              }
+            ]
+          },
+          "nat": {
+            "enabled": false,
+            "ippool": false,
+            "pools": [],
+            "mode": "none"
+          },
+          "users": [],
+          "groups": [],
+          "schedule": "always",
+          "logtraffic": "utm",
+          "profiles": {
+            "ssl-ssh-profile": "certificate-inspection"
+          },
+          "applications": [],
+          "comments": null,
+          "line": 39,
+          "notes": [],
+          "defaults_applied": [
+            "srcaddr-negate",
+            "internet-service-src",
+            "dstaddr-negate",
+            "internet-service",
+            "service-negate",
+            "nat",
+            "status",
+            "logtraffic"
+          ],
+          "unknown_keys": {}
+        }
+      ],
       "addresses": [
         {
           "name": "all",
@@ -962,16 +973,7 @@
   ],
   "coverage": {
     "unprocessed_sections": [],
-    "unknown_keys": [
-      {
-        "section": "system settings",
-        "key": "ngfw-mode",
-        "count": 1,
-        "scopes": [
-          "root"
-        ]
-      }
-    ]
+    "unknown_keys": []
   },
   "notes": []
 }

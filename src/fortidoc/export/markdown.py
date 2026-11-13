@@ -213,7 +213,7 @@ def render_markdown(resolved: ResolvedConfig, findings: list[Finding], created_a
                 out += ["```mermaid", diagram.rstrip("\n"), "```"]
                 if any(mermaid_label(z) != z for z in matrix.rows + matrix.cols):
                     out += ["", "Sonderzeichen in Zonennamen stehen im Diagramm als ?; die Tabelle zeigt die genauen Namen."]
-            out += ["", "Zeilen: Quellzonen, Spalten: Zielzonen. Ohne implizites Deny und Local-In-Regeln.", ""]
+            out += ["", "Zeilen: Quellzonen, Spalten: Zielzonen. Ohne implizites Deny, Local-In- und SSL-Inspection-Regeln.", ""]
             out += _matrix_table(matrix)
         out += ["", "### Regeln", ""]
         out += _table(RULE_COLUMNS, [_rule_row(p) for p in vdom.policies])
@@ -222,6 +222,16 @@ def render_markdown(resolved: ResolvedConfig, findings: list[Finding], created_a
             out += _table(RULE_COLUMNS, [_rule_row(p) for p in vdom.local_in])
         else:
             out.append("Keine Local-In-Regeln.")
+        if vdom.inspection:
+            out += [
+                "",
+                "### SSL-Inspection- und Authentifizierungsregeln",
+                "",
+                "NGFW-Modus richtlinienbasiert: Die Einträge in firewall policy steuern SSL-Inspection "
+                "und Authentifizierung, keine Zugriffe. Das Regelwerk oben besteht aus den Security-Policies.",
+                "",
+            ]
+            out += _table(RULE_COLUMNS, [_rule_row(p) for p in vdom.inspection])
     out += ["", "## Auffälligkeiten", ""]
     if findings:
         out += _table(FINDING_COLUMNS, finding_rows(findings))

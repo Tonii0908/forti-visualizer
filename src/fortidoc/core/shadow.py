@@ -259,7 +259,7 @@ def find_shadowed(resolved: ResolvedConfig) -> list[Shadowing]:
     result: list[Shadowing] = []
     for vdom in resolved.vdoms:
         tables: dict[str, list[ResolvedPolicy]] = {}
-        for p in [*vdom.policies, *vdom.local_in]:
+        for p in [*vdom.policies, *vdom.local_in, *vdom.inspection]:
             if not p.implicit:
                 tables.setdefault(p.section, []).append(p)
         for policies in tables.values():

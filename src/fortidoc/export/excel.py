@@ -61,6 +61,7 @@ SHEETS = [
     "Übersicht",
     "Policies",
     "Local-In",
+    "SSL-Inspection",
     "Adressen",
     "Dienste",
     "NAT",
@@ -246,8 +247,8 @@ def _policy_style(policy: ResolvedPolicy) -> str:
     return "wrap"
 
 
-def _policies_sheet(ws, resolved: ResolvedConfig, local_in: bool = False) -> None:
-    policies = [p for vdom in resolved.vdoms for p in (vdom.local_in if local_in else vdom.policies)]
+def _policies_sheet(ws, resolved: ResolvedConfig, table: str = "policies") -> None:
+    policies = [p for vdom in resolved.vdoms for p in getattr(vdom, table)]
     _write_table(
         ws, POLICY_COLUMNS, (_policy_row(p) for p in policies), lambda i: _policy_style(policies[i])
     )
@@ -268,7 +269,8 @@ def build_workbook(resolved: ResolvedConfig, findings: list[Finding], created_at
     sheets = {name: wb.create_sheet(title=name) for name in SHEETS}
     _overview_sheet(sheets["Übersicht"], resolved, findings, created_at)
     _policies_sheet(sheets["Policies"], resolved)
-    _policies_sheet(sheets["Local-In"], resolved, local_in=True)
+    _policies_sheet(sheets["Local-In"], resolved, "local_in")
+    _policies_sheet(sheets["SSL-Inspection"], resolved, "inspection")
     _write_table(sheets["Adressen"], ADDRESS_COLUMNS, address_rows(resolved, fit_lines))
     _write_table(sheets["Dienste"], SERVICE_COLUMNS, service_rows(resolved, fit_lines))
     _write_table(sheets["NAT"], NAT_COLUMNS, nat_rows(resolved, fit_lines))

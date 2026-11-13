@@ -8,6 +8,7 @@
   const SVCS = DATA.svcs; // [kind, text, note, protocol, [lo, hi] | null, srcRestricted, protocolNumber]
   const POLICIES = DATA.policies;
   const LOCAL_IN = DATA.localIn;
+  const INSPECTION = DATA.inspection;
   const MULTI = DATA.multiVdom;
   const PAGE_SIZES = [50, 100, 250, 500];
   const VALUE_PREVIEW = 6;
@@ -872,13 +873,13 @@
   // Local-in rules
   // ---------------------------------------------------------------------------
 
-  let localInBuilt = false;
+  const ownTables = new Set();
 
-  function buildLocalIn() {
-    if (localInBuilt) return;
-    localInBuilt = true;
-    const table = ruleTable($("localin-rules"), null, "Das Backup enthält keine Local-In-Regeln.");
-    table.setRows(LOCAL_IN.map((p) => ({ p: p, reasons: [] })));
+  function buildOwnTable(containerId, policies, emptyText) {
+    if (ownTables.has(containerId)) return;
+    ownTables.add(containerId);
+    const table = ruleTable($(containerId), null, emptyText);
+    table.setRows(policies.map((p) => ({ p: p, reasons: [] })));
   }
 
   // ---------------------------------------------------------------------------
@@ -894,7 +895,8 @@
     }
     if (name === "rules") buildRules();
     if (name === "matrix") buildMatrix();
-    if (name === "localin") buildLocalIn();
+    if (name === "localin") buildOwnTable("localin-rules", LOCAL_IN, "Das Backup enthält keine Local-In-Regeln.");
+    if (name === "inspection") buildOwnTable("inspection-rules", INSPECTION, "Keine SSL-Inspection-Regeln.");
     const section = $("view-" + name);
     if (section) for (const container of section.querySelectorAll(".generic")) buildGeneric(container);
   }
@@ -938,6 +940,12 @@
       printSection(area, "Local-In-Regeln", [
         h("p", "hint", "Verkehr zur FortiGate selbst; eigene Tabelle mit eigener Reihenfolge."),
         fullTable(ruleColumns(null), LOCAL_IN.map((p) => ({ p: p, reasons: [] })), ruleClass),
+      ]);
+    }
+    if (INSPECTION.length) {
+      printSection(area, "SSL-Inspection- und Authentifizierungsregeln", [
+        h("p", "hint", "NGFW-Modus richtlinienbasiert: firewall policy steuert SSL-Inspection und Authentifizierung; eigene Tabelle."),
+        fullTable(ruleColumns(null), INSPECTION.map((p) => ({ p: p, reasons: [] })), ruleClass),
       ]);
     }
     const tables = [

@@ -256,6 +256,7 @@ class _VdomContext:
         used: list[str] = []
         self.central_nat = _one(_get(self.settings, "central-nat", used)) == "enable"
         self.opmode = _one(_get(self.settings, "opmode", used))
+        self.ngfw_mode = _one(_get(self.settings, "ngfw-mode", used)) or "profile-based"
         self.zones: dict[str, ZoneInfo] = {}
         self.sdwan_zones: dict[str, ZoneInfo] = {}
         self.vips: dict[str, VipMapping] = {}
@@ -765,7 +766,7 @@ class Resolver:
 
     # -- policies --------------------------------------------------------------
 
-    def resolve(self, policy: ConfigObject, position: int = 0) -> ResolvedPolicy:
+    def resolve(self, policy: ConfigObject, position: int = 0, table: str = "policy") -> ResolvedPolicy:
         """Resolve one rule of a policy table (forward, security or local-in)."""
         ctx = self.contexts[policy.vdom]
         used: list[str] = []
@@ -869,6 +870,7 @@ class Resolver:
         logtraffic = _one(_get(policy, "logtraffic", used))
         return ResolvedPolicy(
             vdom=ctx.name,
+            table="local-in" if local else table,
             section=policy.section,
             position=position,
             policy_id=policy.name or "",
@@ -1052,7 +1054,15 @@ class Resolver:
 
     def resolve_vdom(self, ctx: _VdomContext) -> ResolvedVdom:
         policies: list[ResolvedPolicy] = []
+        inspection: list[ResolvedPolicy] = []
+        # ASSUMPTION(N5): in NGFW policy-based mode 'firewall policy' holds SSL inspection and
+        # authentication rules; the access rules are the security policies.
+        policy_based = ctx.ngfw_mode == "policy-based"
         for section in ("firewall policy", "firewall policy6", "firewall security-policy"):
+            if policy_based and section != "firewall security-policy":
+                for obj in ctx.loaded.objects(section):
+                    inspection.append(self.resolve(obj, position=len(inspection) + 1, table="inspection"))
+                continue
             for obj in ctx.loaded.objects(section):
                 policies.append(self.resolve(obj, position=len(policies) + 1))
         with_v6 = any("6" in p.ip_version for p in policies)
@@ -1064,6 +1074,12 @@ class Resolver:
             for obj in ctx.loaded.objects(section):
                 local_in.append(self.resolve(obj, position=len(local_in) + 1))
         notes = []
+        if policy_based:
+            notes.append(
+                "NGFW-Modus richtlinienbasiert: Das Regelwerk besteht aus den Security-Policies. "
+                "Die Einträge in firewall policy steuern SSL-Inspection und Authentifizierung "
+                "und stehen in einer eigenen Tabelle."
+            )
         if ctx.central_nat:
             notes.append(
                 "Central NAT ist aktiv: VIPs wirken ohne Verweis in der Policy. "
@@ -1073,10 +1089,12 @@ class Resolver:
             name=ctx.name,
             central_nat=ctx.central_nat,
             opmode=ctx.opmode,
+            ngfw_mode=ctx.ngfw_mode,
             notes=notes,
             zones=self._zone_list(ctx),
             policies=policies,
             local_in=local_in,
+            inspection=inspection,
             addresses=self._address_table(ctx),
             services=self._service_table(ctx),
             vips=list(ctx.vips.values()),

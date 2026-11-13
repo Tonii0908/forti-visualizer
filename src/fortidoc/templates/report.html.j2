@@ -45,6 +45,7 @@
   <button type="button" data-view="diagram">Zonen-Diagramm</button>
   <button type="button" data-view="rules">Regeln</button>
   <button type="button" data-view="localin">Local-In <span class="count">{{ local_in_count }}</span></button>
+  <button type="button" data-view="inspection"{% if not inspection_count %} hidden{% endif %}>SSL-Inspection <span class="count">{{ inspection_count }}</span></button>
   <button type="button" data-view="addresses">Adressen</button>
   <button type="button" data-view="services">Dienste</button>
   <button type="button" data-view="interfaces">Interfaces und Zonen</button>
@@ -95,7 +96,7 @@
 
   <section id="view-diagram" class="view" hidden>
     <h2>Zonen-Diagramm</h2>
-    <p class="hint">Links Quellzonen, rechts Zielzonen, in der Reihenfolge der Zonen-Matrix. Jede Linie steht für die Regeln einer Zonen-Kombination; die Linienstärke wächst mit der Zahl der Regeln. Der Mauszeiger über einer Linie zeigt Anzahl und Positionen. Local-In-Regeln und das implizite Deny sind nicht enthalten.</p>
+    <p class="hint">Links Quellzonen, rechts Zielzonen, in der Reihenfolge der Zonen-Matrix. Jede Linie steht für die Regeln einer Zonen-Kombination; die Linienstärke wächst mit der Zahl der Regeln. Der Mauszeiger über einer Linie zeigt Anzahl und Positionen. Local-In-Regeln, SSL-Inspection-Regeln und das implizite Deny sind nicht enthalten.</p>
     <p class="legend"><span class="n-accept">━ Accept</span> <span class="n-deny">━ Deny</span> <span class="n-other">━ Sonstige</span> <span class="n-disabled">┅ deaktiviert</span></p>
 {% for d in diagrams %}
     <div class="diagram-block">
@@ -180,6 +181,12 @@
     <h2>Local-In-Regeln</h2>
     <p class="hint">Regeln für Verkehr zur FortiGate selbst (firewall local-in-policy und local-in-policy6). Sie bilden eine eigene Tabelle mit eigener Reihenfolge und stehen nicht in der Zonen-Matrix. Ob ein Dienst auf einem Interface überhaupt erreichbar ist, bestimmt zusätzlich dessen allowaccess.</p>
     <div id="localin-rules"></div>
+  </section>
+
+  <section id="view-inspection" class="view" hidden>
+    <h2>SSL-Inspection- und Authentifizierungsregeln</h2>
+    <p class="hint">NGFW-Modus richtlinienbasiert: Die Einträge in firewall policy steuern SSL-Inspection und Authentifizierung, keine Zugriffe. Sie bilden eine eigene Tabelle mit eigener Reihenfolge und stehen nicht in Zonen-Matrix, Zonen-Diagramm und Suche. Das Regelwerk des VDOMs sind die Security-Policies unter „Regeln“.</p>
+    <div id="inspection-rules"></div>
   </section>
 
   <section id="view-addresses" class="view" hidden>

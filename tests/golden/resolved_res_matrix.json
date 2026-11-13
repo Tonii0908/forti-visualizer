@@ -84,6 +84,7 @@
       "name": "root",
       "central_nat": false,
       "opmode": "nat",
+      "ngfw_mode": "profile-based",
       "notes": [],
       "zones": [
         {
@@ -118,6 +119,7 @@
       "policies": [
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 1,
           "policy_id": "10",
@@ -252,6 +254,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 2,
           "policy_id": "20",
@@ -387,6 +390,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 3,
           "policy_id": "30",
@@ -514,6 +518,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 4,
           "policy_id": "40",
@@ -640,6 +645,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 5,
           "policy_id": "50",
@@ -769,6 +775,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 6,
           "policy_id": "60",
@@ -896,6 +903,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 7,
           "policy_id": "70",
@@ -1023,6 +1031,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "implicit",
           "position": 8,
           "policy_id": "0",
@@ -1131,6 +1140,7 @@
         }
       ],
       "local_in": [],
+      "inspection": [],
       "addresses": [
         {
           "name": "all",

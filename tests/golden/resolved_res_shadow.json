@@ -67,6 +67,7 @@
       "name": "root",
       "central_nat": false,
       "opmode": "nat",
+      "ngfw_mode": "profile-based",
       "notes": [],
       "zones": [
         {
@@ -100,6 +101,7 @@
       "policies": [
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 1,
           "policy_id": "1",
@@ -227,6 +229,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 2,
           "policy_id": "2",
@@ -354,6 +357,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 3,
           "policy_id": "3",
@@ -481,6 +485,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 4,
           "policy_id": "4",
@@ -607,6 +612,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 5,
           "policy_id": "5",
@@ -734,6 +740,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 6,
           "policy_id": "10",
@@ -860,6 +867,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 7,
           "policy_id": "11",
@@ -987,6 +995,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 8,
           "policy_id": "12",
@@ -1116,6 +1125,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 9,
           "policy_id": "13",
@@ -1243,6 +1253,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 10,
           "policy_id": "14",
@@ -1370,6 +1381,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 11,
           "policy_id": "15",
@@ -1497,6 +1509,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 12,
           "policy_id": "16",
@@ -1624,6 +1637,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 13,
           "policy_id": "20",
@@ -1765,6 +1779,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 14,
           "policy_id": "21",
@@ -1892,6 +1907,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 15,
           "policy_id": "22",
@@ -2019,6 +2035,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "implicit",
           "position": 16,
           "policy_id": "0",
@@ -2127,6 +2144,7 @@
         }
       ],
       "local_in": [],
+      "inspection": [],
       "addresses": [
         {
           "name": "all",

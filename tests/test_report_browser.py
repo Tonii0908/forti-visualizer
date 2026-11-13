@@ -197,7 +197,7 @@ def test_application_rule_is_only_a_possible_hit(open_report):
     page = open_report("res_security_policy.conf")
     page.search(ip="10.0.1.5", side="src", port="443")
     assert "1" in page.ids("rules-possible")  # web-apps: application control
-    assert page.ids("rules-main") == ["1", "3", IMPLICIT]  # ssl-inspection, lan-https
+    assert page.ids("rules-main") == ["3", IMPLICIT]  # lan-https; ssl-inspection is no access rule
     assert "Anwendung 15832" in page.page.locator("#rules-possible").inner_text()
 
 
@@ -385,3 +385,12 @@ def test_zone_diagram_is_drawn(open_report):
     assert box and box["width"] > 600 and box["height"] > 150
     assert page.page.locator("#view-diagram path.edge").count() == 8  # one curve per cell and kind
     assert page.page.locator("#view-diagram g.node").count() == 7
+
+
+def test_inspection_view_in_policy_based_mode(open_report):
+    page = open_report("res_security_policy.conf")
+    page.view("inspection")
+    assert page.ids("inspection-rules") == ["1"]
+    assert "ssl-inspection" in page.page.locator("#inspection-rules").inner_text()
+    page = open_report("res_matrix.conf")
+    assert not page.page.locator("nav button[data-view='inspection']").is_visible()

@@ -203,6 +203,9 @@ class ResolvedService(BaseModel):
 
 class ResolvedPolicy(BaseModel):
     vdom: str
+    # Rule table: "policy" (access rules), "local-in" (traffic to the FortiGate),
+    # "inspection" (firewall policy in NGFW policy-based mode: SSL inspection and authentication).
+    table: Literal["policy", "local-in", "inspection"] = "policy"
     section: Literal[
         "firewall policy",
         "firewall policy6",
@@ -340,10 +343,13 @@ class ResolvedVdom(BaseModel):
     name: str
     central_nat: bool = False
     opmode: str | None = None
+    ngfw_mode: str = "profile-based"
     notes: list[str] = Field(default_factory=list)
     zones: list[ZoneInfo] = Field(default_factory=list)
     policies: list[ResolvedPolicy] = Field(default_factory=list)
     local_in: list[ResolvedPolicy] = Field(default_factory=list)  # traffic to the FortiGate itself
+    # NGFW policy-based mode: the entries of 'firewall policy' (SSL inspection, authentication).
+    inspection: list[ResolvedPolicy] = Field(default_factory=list)
     addresses: list[ResolvedAddress] = Field(default_factory=list)
     services: list[ResolvedService] = Field(default_factory=list)
     vips: list[VipMapping] = Field(default_factory=list)
@@ -351,7 +357,7 @@ class ResolvedVdom(BaseModel):
     snat: list[SnatRule] = Field(default_factory=list)
 
     def policy(self, policy_id: str, section: str = "firewall policy") -> ResolvedPolicy | None:
-        for p in [*self.policies, *self.local_in]:
+        for p in [*self.policies, *self.local_in, *self.inspection]:
             if p.section == section and p.policy_id == policy_id:
                 return p
         return None
