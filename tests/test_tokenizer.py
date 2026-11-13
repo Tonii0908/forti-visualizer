@@ -108,3 +108,33 @@ def test_line_numbers_after_multiline_string():
     text = 'set a "1\n2\n3"\nset b x\n'
     stmts = statements(text)
     assert stmts[1].line == 4
+
+
+# --- empty value '' and escaped apostrophe (ANNAHMEN T1, T2) -----------------
+
+
+def test_two_apostrophes_are_an_empty_string():
+    (stmt,) = statements("set image-base64 ''\n")
+    assert [t.text for t in stmt.tokens] == ["set", "image-base64", ""]
+    assert stmt.tokens[2].quoted
+
+
+def test_two_apostrophes_among_other_values():
+    assert words('set a \'\' "x" \'\'\n') == [["set", "a", "", "x", ""]]
+
+
+def test_escaped_apostrophe_inside_quotes():
+    assert words(r'set comment "Bob\'s rule"' + "\n") == [["set", "comment", "Bob's rule"]]
+
+
+def test_escaped_apostrophe_outside_quotes():
+    assert words(r"set x it\'s" + "\n") == [["set", "x", "it's"]]
+
+
+def test_escaped_apostrophes_are_not_an_empty_string():
+    (stmt,) = statements(r"set x \'\'" + "\n")
+    assert stmt.tokens[2].text == "''"
+
+
+def test_apostrophes_inside_a_word_stay_text():
+    assert words("set x a''b 'abc'\n") == [["set", "x", "a''b", "'abc'"]]

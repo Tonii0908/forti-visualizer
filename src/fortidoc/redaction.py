@@ -36,6 +36,14 @@ _SECRET_SUBSTRINGS = (
 # "md5-keys", "key-string") is secret; "keylife" or "keyword" are not.
 _KEY_SUFFIXES = ("key", "keys")
 
+# ASSUMPTION(S3): secrets identified by their position, not their key name.
+# Path = the config path without the VDOM wrapper ('config global' /
+# 'config vdom'), e.g. ('system', 'snmp', 'community'); must match exactly.
+_SECRET_PATH_KEYS: dict[tuple[str, ...], frozenset[str]] = {
+    # The SNMP community string is stored in clear text as the entry's name.
+    ("system", "snmp", "community"): frozenset({"name"}),
+}
+
 # A value that contains a PEM/certificate block is always removed.
 _PEM_MARKER = "-----BEGIN"
 
@@ -60,14 +68,24 @@ def is_secret_value(values: Sequence[str]) -> bool:
     return any(_PEM_MARKER in v for v in values)
 
 
-def redact_values(key: str, values: Sequence[str]) -> tuple[list[str], bool]:
+def is_secret_path_key(path: Sequence[str], key: str) -> bool:
+    """Return True if ``key`` is secret at this config path."""
+    keys = _SECRET_PATH_KEYS.get(tuple(path))
+    return keys is not None and key in keys
+
+
+def redact_values(
+    key: str, values: Sequence[str], path: Sequence[str] = ()
+) -> tuple[list[str], bool]:
     """Return (values, redacted). Secret values are replaced by one placeholder."""
-    if values and (is_secret_key(key) or is_secret_value(values)):
+    if values and (
+        is_secret_key(key) or is_secret_value(values) or is_secret_path_key(path, key)
+    ):
         return [REDACTED], True
     return list(values), False
 
 
-def redact_tokens(words: Sequence[str]) -> list[str]:
+def redact_tokens(words: Sequence[str], path: Sequence[str] = ()) -> list[str]:
     """Redact a raw statement (keyword, key, values...) for error messages.
 
     Used for lines that may be malformed, so it does not rely on the
@@ -80,7 +98,11 @@ def redact_tokens(words: Sequence[str]) -> list[str]:
             out.append(REDACTED)
             break
         out.append(word)
-        if index >= 1 and is_secret_key(word) and index + 1 < len(words):
+        if (
+            index >= 1
+            and (is_secret_key(word) or is_secret_path_key(path, word))
+            and index + 1 < len(words)
+        ):
             out.append(REDACTED)
             break
     return out

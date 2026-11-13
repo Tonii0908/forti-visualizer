@@ -51,6 +51,18 @@ def test_header_variants(line, model, version, build):
     assert (h.model, h.version, h.build) == (model, version, build)
 
 
+def test_header_fortios_5_two_part_version(fixture_path):
+    tree = parse_file(fixture_path("header_v5.conf"))
+    h = tree.header
+    assert (h.model, h.version, h.build) == ("FGT60D", "5.06", "1638")
+    assert h.version_tuple() == (5, 6)
+    assert not tree.warnings
+
+
+def test_version_tuple_three_parts(fixture_path):
+    assert parse_file(fixture_path("no_vdom.conf")).header.version_tuple() == (7, 2, 5)
+
+
 def test_unparseable_header_is_a_warning_not_an_error():
     tree = parse_text("#config-version=garbage\nconfig a\nend\n")
     assert tree.header.raw == "garbage"

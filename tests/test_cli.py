@@ -34,6 +34,13 @@ def test_parse_json_outputs_tree(fixture_path):
     assert [v["name"] for v in tree["vdoms"]] == ["root", "dmz"]
 
 
+def test_parse_json_warns_about_confidential_data(fixture_path):
+    result = run("parse", str(fixture_path("no_vdom.conf")), "--json")
+    data = json.loads(result.stdout)
+    assert "vertrauliche" in data["meta"]["hinweis"]
+    assert "vertrauliche" in result.stderr
+
+
 def test_parse_json_is_deterministic_except_creation_time(fixture_path):
     path = str(fixture_path("two_vdoms.conf"))
     first = json.loads(run("parse", path, "--json").stdout)

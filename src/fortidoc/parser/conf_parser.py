@@ -116,6 +116,15 @@ class Header(BaseModel):
     options: dict[str, str] = Field(default_factory=dict)
     extra: dict[str, str] = Field(default_factory=dict)
 
+    def version_tuple(self) -> tuple[int, ...] | None:
+        """Numeric version for comparisons: '7.2.5' -> (7, 2, 5), '5.06' -> (5, 6).
+
+        ASSUMPTION(H4): the two-part form of FortiOS 5.x means major.minor.
+        """
+        if not self.version:
+            return None
+        return tuple(int(part) for part in self.version.split("."))
+
 
 class Vdom(BaseModel):
     name: str
@@ -190,6 +199,12 @@ _BINARY_MESSAGE = (
     "oder es ist keine Textdatei. fortidoc verarbeitet nur unverschlüsselte Backups "
     "im FortiOS-CLI-Format (.conf). Bitte das Backup ohne Passwortschutz exportieren."
 )
+_ENCRYPTED_MARKER = b"#FGBK"
+_ENCRYPTED_MESSAGE = (
+    "Das Backup ist verschlüsselt (Kennung #FGBK am Dateianfang). fortidoc verarbeitet nur "
+    "unverschlüsselte Backups im FortiOS-CLI-Format (.conf). Bitte das Backup ohne "
+    "Passwortschutz exportieren."
+)
 # Share of control characters above which a file counts as binary.
 # ASSUMPTION(E1): heuristic, no real encrypted backup was available. See ANNAHMEN.md.
 _BINARY_CONTROL_RATIO = 0.01
@@ -208,8 +223,9 @@ def parse_file(path: str | Path) -> ConfigTree:
 
 
 def parse_bytes(data: bytes, name: str | None = None) -> ConfigTree:
-    text = decode_config_bytes(data)
+    text, warnings = decode_config_bytes(data)
     tree = parse_text(text)
+    tree.warnings = warnings + tree.warnings
     tree.source = SourceInfo(name=name, sha256=hashlib.sha256(data).hexdigest(), size_bytes=len(data))
     return tree
 
@@ -219,31 +235,58 @@ def _control_ratio(data: bytes) -> float:
     return control / len(data)
 
 
-def decode_config_bytes(data: bytes) -> str:
-    """Check that the bytes are a plain-text FortiOS CLI config and decode them."""
+def decode_config_bytes(data: bytes) -> tuple[str, list[ParseWarning]]:
+    """Check that the bytes are a plain-text FortiOS CLI config and decode them.
+
+    Returns the text and warnings (e.g. about the Latin-1 fallback).
+    """
+    warnings: list[ParseWarning] = []
     if not data.strip():
         raise InputFormatError("Die Eingabedatei ist leer.")
-    # ASSUMPTION(E2): backups are UTF-8 (optionally with BOM). See ANNAHMEN.md.
     if data.startswith(_UTF8_BOM):
         data = data[len(_UTF8_BOM):]
+    # ASSUMPTION(E3): encrypted backups start with '#FGBK'.
+    if data.lstrip().startswith(_ENCRYPTED_MARKER):
+        raise InputFormatError(_ENCRYPTED_MESSAGE)
     if b"\x00" in data or _control_ratio(data) > _BINARY_CONTROL_RATIO:
         raise InputFormatError(_BINARY_MESSAGE)
     try:
+        # ASSUMPTION(E2): backups are UTF-8 (optionally with BOM). See ANNAHMEN.md.
         text = data.decode("utf-8")
     except UnicodeDecodeError as exc:
         line = data.count(b"\n", 0, exc.start) + 1
-        raise InputFormatError(
-            f"Die Eingabedatei ist nicht UTF-8-kodiert (erstes ungültiges Byte in Zeile {line}). "
-            "fortidoc erwartet ein FortiOS-Backup als UTF-8-Text."
-        ) from None
+        bad_lines = _count_invalid_utf8_lines(data)
+        text = data.decode("latin-1")
+        warnings.append(
+            ParseWarning(
+                line=line,
+                message=(
+                    f"Die Eingabedatei ist kein gültiges UTF-8 (erstes ungültiges Byte in Zeile {line}, "
+                    f"betroffen sind {bad_lines} Zeile(n)). Sie wurde ersatzweise als Latin-1 gelesen; "
+                    "Sonderzeichen können falsch dargestellt sein."
+                ),
+            )
+        )
     first = next(line.strip() for line in text.splitlines() if line.strip())
+    if first.startswith(_ENCRYPTED_MARKER.decode()):
+        raise InputFormatError(_ENCRYPTED_MESSAGE)
     if not (first.startswith("#") or first.split()[0] == "config"):
         raise InputFormatError(
             "Keine FortiOS-Konfiguration erkannt: Die erste Zeile beginnt weder mit "
             "'#config-version' noch mit 'config'. Unterstützt werden nur unverschlüsselte "
             "Backups im FortiOS-CLI-Format, keine verschlüsselten oder YAML-Backups."
         )
-    return text
+    return text, warnings
+
+
+def _count_invalid_utf8_lines(data: bytes) -> int:
+    count = 0
+    for raw_line in data.split(b"\n"):
+        try:
+            raw_line.decode("utf-8")
+        except UnicodeDecodeError:
+            count += 1
+    return count
 
 
 # ---------------------------------------------------------------------------
@@ -253,7 +296,7 @@ def decode_config_bytes(data: bytes) -> str:
 # FGT60F-7.2.5-FW-build1517-230606 ; the model may itself contain hyphens.
 # ASSUMPTION(H1): layout of the version string. See ANNAHMEN.md.
 _VERSION_RE = re.compile(
-    r"^(?P<model>.+?)-(?P<version>\d+\.\d+\.\d+)-(?P<type>[A-Za-z]+)"
+    r"^(?P<model>.+?)-(?P<version>\d+\.\d+(?:\.\d+)?)-(?P<type>[A-Za-z]+)"
     r"-build(?P<build>\d+)-(?P<date>\d{6})$"
 )
 
@@ -297,7 +340,7 @@ def _parse_config_version(value: str, header: Header) -> None:
 # Rendering helpers (also used for error messages)
 # ---------------------------------------------------------------------------
 
-_PLAIN_TOKEN = re.compile(r'^[^\s"\\]+$')
+_PLAIN_TOKEN = re.compile(r'^[^\s"\'\\]+$')
 _MAX_SOURCE_LINE = 160
 
 
@@ -319,10 +362,10 @@ def _describe(node: ConfigNode | EditNode) -> str:
     return "edit " + _edit_label(node.name)
 
 
-def _render_source(words: list[str], unterminated: bool = False) -> str:
+def _render_source(words: list[str], unterminated: bool = False, path: tuple[str, ...] = ()) -> str:
     """One-line, redacted rendering of a statement for error messages."""
     shown = []
-    for word in redact_tokens(words):
+    for word in redact_tokens(words, path):
         if "\n" in word:
             word = word.split("\n", 1)[0] + "…"
         shown.append(word if word == REDACTED else _maybe_quote(word))
@@ -354,8 +397,17 @@ class _Builder:
     def context(self) -> str:
         return " > ".join(_describe(n) for n in self.stack)
 
+    def config_path(self) -> tuple[str, ...]:
+        """Path of the open config blocks without the VDOM wrapper and edit names."""
+        nodes = self.stack
+        if nodes and isinstance(nodes[0], ConfigNode) and nodes[0].path in (["global"], ["vdom"]):
+            nodes = nodes[1:]
+        return tuple(word for n in nodes if isinstance(n, ConfigNode) for word in n.path)
+
     def error(self, message: str, stmt: Statement) -> ConfigSyntaxError:
-        return ConfigSyntaxError(message, stmt.line, self.context(), _render_source(stmt.words))
+        return ConfigSyntaxError(
+            message, stmt.line, self.context(), _render_source(stmt.words, path=self.config_path())
+        )
 
     # -- main loop ----------------------------------------------------------
 
@@ -371,7 +423,10 @@ class _Builder:
         except TokenizeError as exc:
             words = [t.text for t in exc.partial_tokens]
             raise ConfigSyntaxError(
-                exc.message, exc.line, self.context(), _render_source(words, unterminated=True)
+                exc.message,
+                exc.line,
+                self.context(),
+                _render_source(words, unterminated=True, path=self.config_path()),
             ) from None
         if self.stack:
             innermost = self.stack[-1]
@@ -417,7 +472,7 @@ class _Builder:
                 raise self.error("'set' außerhalb eines Blocks.", stmt)
             if not args:
                 raise self.error("'set' ohne Schlüssel.", stmt)
-            values, redacted = redact_values(args[0], args[1:])
+            values, redacted = redact_values(args[0], args[1:], self.config_path())
             parent.children.append(SetNode(key=args[0], values=values, line=stmt.line, redacted=redacted))
 
         elif keyword == "unset":

@@ -15,6 +15,12 @@ from fortidoc import __version__
 from fortidoc.errors import FortidocError
 from fortidoc.parser.conf_parser import ConfigNode, ConfigTree, EditNode, iter_nodes, parse_file
 
+CONFIDENTIAL_NOTICE = (
+    "Geheimnisse wie Passwörter, Schlüssel und Zertifikate sind entfernt. Der Baum enthält "
+    "trotzdem alle übrigen Werte des Backups und kann vertrauliche Daten enthalten "
+    "(z. B. Webhook-URLs, Benutzernamen, Telefonnummern). Nicht ungeprüft weitergeben."
+)
+
 app = typer.Typer(
     add_completion=False,
     no_args_is_help=False,
@@ -79,7 +85,10 @@ def parse_command(
         raise typer.Exit(1) from None
 
     if as_json:
-        payload = {"meta": _meta(tree), "tree": tree.model_dump(mode="json")}
+        meta = _meta(tree)
+        meta["hinweis"] = CONFIDENTIAL_NOTICE
+        payload = {"meta": meta, "tree": tree.model_dump(mode="json")}
+        typer.echo(f"Hinweis: {CONFIDENTIAL_NOTICE}", err=True)
         typer.echo(json.dumps(payload, ensure_ascii=False, indent=2))
     else:
         typer.echo(_summary(tree))

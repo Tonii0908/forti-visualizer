@@ -8,8 +8,11 @@ Rules (see ANNAHMEN.md, items T1-T6):
 - Tokens are separated by spaces and tabs.
 - Only the double quote ``"`` starts a quoted string. A quoted string may span
   many lines; lines inside it are never statements.
-- Inside and outside quotes, ``\\"`` yields ``"`` and ``\\\\`` yields ``\\``.
-  Any other backslash is kept literally.
+- Inside and outside quotes, ``\\"`` yields ``"``, ``\\'`` yields ``'`` and
+  ``\\\\`` yields ``\\``. Any other backslash is kept literally.
+- A token that is exactly two apostrophes (``''``) is an empty string; FortiOS
+  writes empty values that way (e.g. ``set image-base64 ''``). Apostrophes do
+  not quote anything else.
 - Quoted and unquoted parts that touch (``ab"c d"``) form one token.
 - A line whose first non-blank character is ``#`` (outside a string) is a
   comment / header line.
@@ -24,7 +27,10 @@ from dataclasses import dataclass
 from fortidoc.errors import TokenizeError
 
 _WHITESPACE = " \t\r"
-_ESCAPABLE = '"\\'
+# ASSUMPTION(T2): \" \' and \\ are the only escapes.
+_ESCAPABLE = "\"'\\"
+# ASSUMPTION(T1): '' as a whole token is an empty string.
+_EMPTY_APOSTROPHES = "''"
 # One token on a line without backslashes and with balanced quotes:
 # plain parts and complete quoted parts, joined when they touch.
 _SIMPLE_TOKEN = re.compile(r'(?:[^ \t\r"]+|"[^"]*")+')
@@ -77,7 +83,7 @@ def tokenize(text: str) -> Iterator[Statement | Comment]:
             if quotes == 0:
                 # Fast path: plain words only.
                 words = _split_plain(stripped)
-                yield Statement(lineno, lineno, tuple(Token(w, False, lineno) for w in words))
+                yield Statement(lineno, lineno, tuple(_plain_token(w, lineno) for w in words))
                 index += 1
                 continue
             if quotes % 2 == 0:
@@ -86,7 +92,9 @@ def tokenize(text: str) -> Iterator[Statement | Comment]:
                     lineno,
                     lineno,
                     tuple(
-                        Token(m.replace('"', ""), '"' in m, lineno)
+                        Token(m.replace('"', ""), True, lineno)
+                        if '"' in m
+                        else _plain_token(m, lineno)
                         for m in _SIMPLE_TOKEN.findall(stripped)
                     ),
                 )
@@ -94,6 +102,13 @@ def tokenize(text: str) -> Iterator[Statement | Comment]:
                 continue
         statement, index = _scan_statement(lines, index)
         yield statement
+
+
+def _plain_token(word: str, lineno: int) -> Token:
+    """Token for an unquoted word without escapes."""
+    if word == _EMPTY_APOSTROPHES:
+        return Token("", True, lineno)
+    return Token(word, False, lineno)
 
 
 def _split_plain(stripped: str) -> list[str]:
@@ -120,6 +135,7 @@ def _scan_statement(lines: list[str], start: int) -> tuple[Statement, int]:
     buf: list[str] = []
     in_token = False
     quoted = False
+    escaped = False
     in_quote = False
     quote_line = 0
     token_line = start + 1
@@ -136,6 +152,7 @@ def _scan_statement(lines: list[str], start: int) -> tuple[Statement, int]:
                     in_token = True
                     token_line = index + 1
                 buf.append(text[pos + 1])
+                escaped = True
                 pos += 2
                 continue
             if in_quote:
@@ -147,8 +164,8 @@ def _scan_statement(lines: list[str], start: int) -> tuple[Statement, int]:
                 continue
             if ch in _WHITESPACE:
                 if in_token:
-                    tokens.append(Token("".join(buf), quoted, token_line))
-                    buf, in_token, quoted = [], False, False
+                    tokens.append(_finish_token(buf, quoted, escaped, token_line))
+                    buf, in_token, quoted, escaped = [], False, False, False
                 pos += 1
                 continue
             if not in_token:
@@ -177,5 +194,12 @@ def _scan_statement(lines: list[str], start: int) -> tuple[Statement, int]:
         pos = 0
 
     if in_token:
-        tokens.append(Token("".join(buf), quoted, token_line))
+        tokens.append(_finish_token(buf, quoted, escaped, token_line))
     return Statement(start + 1, index + 1, tuple(tokens)), index + 1
+
+
+def _finish_token(buf: list[str], quoted: bool, escaped: bool, line: int) -> Token:
+    text = "".join(buf)
+    if not quoted and not escaped:
+        return _plain_token(text, line)
+    return Token(text, quoted, line)

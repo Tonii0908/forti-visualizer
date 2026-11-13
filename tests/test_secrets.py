@@ -92,3 +92,40 @@ def test_pem_value_under_any_key_is_redacted():
 def test_certificate_name_reference_is_not_redacted():
     values, redacted = redact_values("certificate", ["Fortinet_Factory"])
     assert not redacted and values == ["Fortinet_Factory"]
+
+
+# --- path rules ---------------------------------------------------------------
+
+
+def test_snmp_community_name_is_redacted(fixture_path):
+    tree = parse_file(fixture_path("snmp_community.conf"))
+    root = tree.vdoms[0]
+    community = root.config("system", "snmp", "community").edit("1")
+    assert community.get("name").redacted
+    assert community.get("name").values == [REDACTED]
+    host = community.config("hosts").edit("1")
+    assert host.get("ip").values == ["10.0.0.50", "255.255.255.255"]
+    assert root.config("system", "snmp", "sysinfo").get("contact-info").values == ["noc team"]
+    assert SECRET_MARKER not in tree.model_dump_json()
+
+
+def test_snmp_community_name_is_redacted_in_multi_vdom_global():
+    from fortidoc.parser.conf_parser import parse_text
+
+    text = (
+        "config vdom\nedit root\nnext\nend\n"
+        "config global\nconfig system snmp community\nedit 1\nset name S3CR3Tglobal\nnext\nend\nend\n"
+    )
+    tree = parse_text(text)
+    community = tree.global_sections[0].edit("1")
+    assert community.get("name").redacted
+
+
+def test_name_outside_snmp_community_is_not_redacted():
+    values, redacted = redact_values("name", ["visible"], ("firewall", "policy"))
+    assert not redacted and values == ["visible"]
+
+
+def test_path_rule_needs_exact_path():
+    assert redact_values("name", ["x"], ("system", "snmp", "community"))[1]
+    assert not redact_values("name", ["x"], ("system", "snmp", "community", "hosts"))[1]

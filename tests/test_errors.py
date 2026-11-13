@@ -49,7 +49,9 @@ def test_error_shows_the_offending_line(fixture_path):
     assert exc.value.source_line == "sett subnet 10.0.0.0 255.0.0.0"
 
 
-@pytest.mark.parametrize("name", ["secret_in_error_line.conf", "secret_unterminated.conf"])
+@pytest.mark.parametrize(
+    "name", ["secret_in_error_line.conf", "secret_unterminated.conf", "secret_snmp_error_line.conf"]
+)
 def test_secrets_never_appear_in_error_messages(fixture_path, name):
     with pytest.raises(ConfigSyntaxError) as exc:
         parse_file(fixture_path(name))
@@ -73,7 +75,7 @@ def test_secret_line_in_context_is_redacted():
         ("not_a_config.conf", "Keine FortiOS-Konfiguration"),
         ("empty.conf", "leer"),
         ("whitespace_only.conf", "leer"),
-        ("latin1.conf", "UTF-8"),
+        ("encrypted_fgbk.conf", "verschlüsselt"),
     ],
 )
 def test_input_format_errors(fixture_path, name, fragment):
@@ -82,10 +84,23 @@ def test_input_format_errors(fixture_path, name, fragment):
     assert fragment in str(exc.value)
 
 
-def test_latin1_error_names_line(fixture_path):
+def test_fgbk_header_names_encryption(fixture_path):
     with pytest.raises(InputFormatError) as exc:
-        parse_file(fixture_path("latin1.conf"))
-    assert "Zeile 3" in str(exc.value)
+        parse_file(fixture_path("encrypted_fgbk.conf"))
+    assert "#FGBK" in str(exc.value)
+
+
+def test_invalid_utf8_falls_back_to_latin1_with_warning(fixture_path):
+    tree = parse_file(fixture_path("latin1.conf"))
+    assert tree.vdoms[0].config("firewall", "address").edit("München") is not None
+    (warning,) = [w for w in tree.warnings if "Latin-1" in w.message]
+    assert warning.line == 3
+    assert "Zeile 3" in warning.message
+
+
+def test_valid_utf8_has_no_encoding_warning(fixture_path):
+    tree = parse_file(fixture_path("no_vdom.conf"))
+    assert not any("Latin-1" in w.message for w in tree.warnings)
 
 
 def test_missing_file_is_a_clear_error(tmp_path):
