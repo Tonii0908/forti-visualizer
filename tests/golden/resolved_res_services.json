@@ -252,6 +252,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 80,
           "notes": [],
@@ -475,6 +476,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 90,
           "notes": [],
@@ -705,6 +707,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 100,
           "notes": [],
@@ -819,6 +822,7 @@
           "schedule": null,
           "logtraffic": null,
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": null,
           "notes": [
@@ -828,6 +832,7 @@
           "unknown_keys": {}
         }
       ],
+      "local_in": [],
       "addresses": [
         {
           "name": "all",

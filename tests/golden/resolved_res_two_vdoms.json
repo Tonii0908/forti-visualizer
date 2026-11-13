@@ -204,6 +204,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 41,
           "notes": [],
@@ -330,6 +331,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 50,
           "notes": [
@@ -446,6 +448,7 @@
           "schedule": null,
           "logtraffic": null,
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": null,
           "notes": [
@@ -455,6 +458,7 @@
           "unknown_keys": {}
         }
       ],
+      "local_in": [],
       "addresses": [
         {
           "name": "all",
@@ -664,6 +668,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 77,
           "notes": [],
@@ -778,6 +783,7 @@
           "schedule": null,
           "logtraffic": null,
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": null,
           "notes": [
@@ -787,6 +793,7 @@
           "unknown_keys": {}
         }
       ],
+      "local_in": [],
       "addresses": [
         {
           "name": "all",

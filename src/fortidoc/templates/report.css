@@ -91,6 +91,7 @@ table { border-collapse: collapse; }
 .empty { color: var(--muted); padding: 8px 0; }
 
 .obj { font-weight: 600; }
+.obj.app { color: var(--other); }
 .neg { color: var(--deny); font-weight: 700; }
 .vals { margin-top: 3px; padding-top: 3px; border-top: 1px dashed var(--line); }
 .val { display: block; }

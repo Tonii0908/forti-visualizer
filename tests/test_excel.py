@@ -73,6 +73,7 @@ def test_sheet_names_and_order(findings_book):
     assert SHEETS == [
         "Übersicht",
         "Policies",
+        "Local-In",
         "Adressen",
         "Dienste",
         "NAT",
@@ -393,7 +394,7 @@ def test_no_secret_in_workbook(path, tmp_path):
         ("res_no_vdom.conf", "fw-res-01"),  # system global hostname
         ("no_vdom.conf", "fw-lab-01"),
         ("unknown_sections.conf", "brand-new"),
-        ("res_findings.conf", "localin-only-marker"),  # value inside firewall local-in-policy
+        ("res_findings.conf", "unevaluated-only-marker"),  # value inside firewall shaping-policy
     ],
 )
 def test_no_raw_values_from_unevaluated_sections(name, raw, tmp_path):
@@ -403,7 +404,7 @@ def test_no_raw_values_from_unevaluated_sections(name, raw, tmp_path):
 
 def test_coverage_sheet_names_unprocessed_section(findings_book):
     _, wb = findings_book
-    assert ("Abschnitt", "root", "firewall local-in-policy", None, 1) == rows(wb["Nicht verarbeitet"])[0][:5]
+    assert ("Abschnitt", "root", "firewall shaping-policy", None, 1) == rows(wb["Nicht verarbeitet"])[0][:5]
 
 
 @pytest.mark.skipif(shutil.which("soffice") is None, reason="LibreOffice nicht installiert")

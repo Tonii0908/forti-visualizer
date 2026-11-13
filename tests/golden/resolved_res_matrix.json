@@ -234,6 +234,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 40,
           "notes": [],
@@ -367,6 +368,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 50,
           "notes": [],
@@ -494,6 +496,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 59,
           "notes": [],
@@ -620,6 +623,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 69,
           "notes": [],
@@ -745,6 +749,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 80,
           "notes": [
@@ -873,6 +878,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 90,
           "notes": [],
@@ -999,6 +1005,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 100,
           "notes": [],
@@ -1113,6 +1120,7 @@
           "schedule": null,
           "logtraffic": null,
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": null,
           "notes": [
@@ -1122,6 +1130,7 @@
           "unknown_keys": {}
         }
       ],
+      "local_in": [],
       "addresses": [
         {
           "name": "all",

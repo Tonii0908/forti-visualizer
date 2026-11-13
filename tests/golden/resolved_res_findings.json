@@ -6,8 +6,8 @@
     "firmware_type": "FW",
     "vdom_mode": "no-vdom",
     "input_name": "res_findings.conf",
-    "input_sha256": "189eeffbdc9d591ecdef4c51f388842bad2f45345cd53f0a3718d4c9721a00ff",
-    "input_size_bytes": 3726
+    "input_sha256": "6b168fb4747af5225dc5453ac0c2a9255c28536e35dc35304b11da89bb6b726c",
+    "input_size_bytes": 3675
   },
   "interfaces": [
     {
@@ -183,6 +183,7 @@
           "schedule": "always",
           "logtraffic": "all",
           "profiles": {},
+          "applications": [],
           "comments": "mentions net-commented only in a comment",
           "line": 76,
           "notes": [],
@@ -308,6 +309,7 @@
           "schedule": "always",
           "logtraffic": "disable",
           "profiles": {},
+          "applications": [],
           "comments": "=> siehe Ticket",
           "line": 88,
           "notes": [],
@@ -433,6 +435,7 @@
           "schedule": "always",
           "logtraffic": "all",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 100,
           "notes": [],
@@ -558,6 +561,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 111,
           "notes": [],
@@ -683,6 +687,7 @@
           "schedule": "always",
           "logtraffic": "all",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 122,
           "notes": [],
@@ -808,6 +813,7 @@
           "schedule": "always",
           "logtraffic": "all",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 133,
           "notes": [],
@@ -940,6 +946,7 @@
           "schedule": null,
           "logtraffic": null,
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": null,
           "notes": [
@@ -949,6 +956,7 @@
           "unknown_keys": {}
         }
       ],
+      "local_in": [],
       "addresses": [
         {
           "name": "all",
@@ -1365,7 +1373,7 @@
     "unprocessed_sections": [
       {
         "scope": "root",
-        "path": "firewall local-in-policy",
+        "path": "firewall shaping-policy",
         "entries": 1,
         "line": 146
       }

@@ -183,6 +183,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": "</script><img src=x onerror=alert(1)>",
           "line": 31,
           "notes": [],
@@ -309,6 +310,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": "</SCRIPT ><script>alert(6)</script><!--",
           "line": 42,
           "notes": [],
@@ -423,6 +425,7 @@
           "schedule": null,
           "logtraffic": null,
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": null,
           "notes": [
@@ -432,6 +435,7 @@
           "unknown_keys": {}
         }
       ],
+      "local_in": [],
       "addresses": [
         {
           "name": "\"><svg onload=alert(2)>",

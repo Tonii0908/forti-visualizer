@@ -43,6 +43,7 @@
   <button type="button" data-view="overview">Übersicht</button>
   <button type="button" data-view="matrix">Zonen-Matrix</button>
   <button type="button" data-view="rules">Regeln</button>
+  <button type="button" data-view="localin">Local-In <span class="count">{{ local_in_count }}</span></button>
   <button type="button" data-view="addresses">Adressen</button>
   <button type="button" data-view="services">Dienste</button>
   <button type="button" data-view="interfaces">Interfaces und Zonen</button>
@@ -143,6 +144,12 @@
       <h3 id="rules-possible-title">Möglicherweise</h3>
       <div id="rules-possible"></div>
     </div>
+  </section>
+
+  <section id="view-localin" class="view" hidden>
+    <h2>Local-In-Regeln</h2>
+    <p class="hint">Regeln für Verkehr zur FortiGate selbst (firewall local-in-policy und local-in-policy6). Sie bilden eine eigene Tabelle mit eigener Reihenfolge und stehen nicht in der Zonen-Matrix. Ob ein Dienst auf einem Interface überhaupt erreichbar ist, bestimmt zusätzlich dessen allowaccess.</p>
+    <div id="localin-rules"></div>
   </section>
 
   <section id="view-addresses" class="view" hidden>

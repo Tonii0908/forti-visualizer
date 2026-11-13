@@ -60,12 +60,12 @@ _TEXT_KEYS = frozenset({"comment", "comments", "description"})
 
 def analyze(tree: ConfigTree, resolved: ResolvedConfig) -> list[Finding]:
     findings: list[Finding] = []
-    shadowed = {(s.shadowed.vdom, s.shadowed.position): s for s in find_shadowed(resolved)}
+    shadowed = {id(s.shadowed): s for s in find_shadowed(resolved)}
     for vdom in resolved.vdoms:
-        for policy in vdom.policies:
+        for policy in [*vdom.policies, *vdom.local_in]:
             if not policy.implicit:
                 findings.extend(_policy_findings(policy))
-                hit = shadowed.get((policy.vdom, policy.position))
+                hit = shadowed.get(id(policy))
                 if hit is not None:
                     findings.append(_shadow_finding(hit))
     findings.extend(_unused_objects(tree, resolved))
@@ -159,11 +159,16 @@ def _axis(used: list[str], known: list[str]) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
+def rule_kind(policy: ResolvedPolicy) -> str:
+    """'Regel' or 'Local-In-Regel': the two tables number their positions separately."""
+    return "Local-In-Regel" if policy.section.startswith("firewall local-in") else "Regel"
+
+
 def _finding(policy: ResolvedPolicy, category: str, detail: str) -> Finding:
     return Finding(
         category=category,
         vdom=policy.vdom,
-        object_kind="Regel",
+        object_kind=rule_kind(policy),
         position=policy.position,
         ref=policy.policy_id,
         name=policy.name,
@@ -194,7 +199,12 @@ def _policy_findings(policy: ResolvedPolicy) -> Iterable[Finding]:
         return
 
     parts = []
-    for label, side in (("Quelle", policy.source), ("Ziel", policy.destination)):
+    sides = [("Quelle", policy.source), ("Ziel", policy.destination)]
+    if rule_kind(policy) == "Local-In-Regel":
+        # The destination of a local-in rule is the FortiGate itself: 'all' there means
+        # "every address of the FortiGate", not every host.
+        sides = sides[:1]
+    for label, side in sides:
         hits = _any_values(side, from_default=False)
         if hits:
             parts.append(f"{label}: {', '.join(hits)}")

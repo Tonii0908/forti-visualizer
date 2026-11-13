@@ -10,7 +10,8 @@ The check is conservative: it only reports what it can prove.
   services are resolved. FQDN, Geo, dynamic, VIP, Internet Service, negation
   and values without subnet make B "not checkable", never "shadowed".
 - A counts only with what is certain: its exact networks/ranges and resolved
-  services. A rule with negation or Internet Service never shadows.
+  services. A rule with negation, Internet Service or an application/URL
+  category (security policies) never shadows.
 - Further conditions of A must not restrict it: users/groups (unless B has the
   same), a schedule other than "always" (unless B has the same).
 
@@ -174,6 +175,7 @@ def _rule(index: int, p: ResolvedPolicy) -> _Rule:
     services, svc_complete = _services(p.service)
     plain = not (p.source.negate or p.destination.negate or p.service.negate)
     plain = plain and not (p.source.internet_services or p.destination.internet_services)
+    plain = plain and not p.applications  # matches only part of its address/service traffic
     return _Rule(
         index=index,
         policy=p,
@@ -257,7 +259,7 @@ def find_shadowed(resolved: ResolvedConfig) -> list[Shadowing]:
     result: list[Shadowing] = []
     for vdom in resolved.vdoms:
         tables: dict[str, list[ResolvedPolicy]] = {}
-        for p in vdom.policies:
+        for p in [*vdom.policies, *vdom.local_in]:
             if not p.implicit:
                 tables.setdefault(p.section, []).append(p)
         for policies in tables.values():

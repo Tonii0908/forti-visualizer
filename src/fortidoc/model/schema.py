@@ -203,7 +203,14 @@ class ResolvedService(BaseModel):
 
 class ResolvedPolicy(BaseModel):
     vdom: str
-    section: Literal["firewall policy", "firewall policy6", "implicit"]
+    section: Literal[
+        "firewall policy",
+        "firewall policy6",
+        "firewall security-policy",
+        "firewall local-in-policy",
+        "firewall local-in-policy6",
+        "implicit",
+    ]
     position: int  # 1-based, file order within the VDOM
     policy_id: str
     implicit: bool = False
@@ -226,6 +233,8 @@ class ResolvedPolicy(BaseModel):
     schedule: str | None = None
     logtraffic: str | None = None
     profiles: dict[str, str] = Field(default_factory=dict)
+    # Security policies: applications and categories ("Anwendung 15832", ...).
+    applications: list[str] = Field(default_factory=list)
     comments: str | None = None
     line: int | None = None
     notes: list[str] = Field(default_factory=list)
@@ -334,6 +343,7 @@ class ResolvedVdom(BaseModel):
     notes: list[str] = Field(default_factory=list)
     zones: list[ZoneInfo] = Field(default_factory=list)
     policies: list[ResolvedPolicy] = Field(default_factory=list)
+    local_in: list[ResolvedPolicy] = Field(default_factory=list)  # traffic to the FortiGate itself
     addresses: list[ResolvedAddress] = Field(default_factory=list)
     services: list[ResolvedService] = Field(default_factory=list)
     vips: list[VipMapping] = Field(default_factory=list)
@@ -341,7 +351,7 @@ class ResolvedVdom(BaseModel):
     snat: list[SnatRule] = Field(default_factory=list)
 
     def policy(self, policy_id: str, section: str = "firewall policy") -> ResolvedPolicy | None:
-        for p in self.policies:
+        for p in [*self.policies, *self.local_in]:
             if p.section == section and p.policy_id == policy_id:
                 return p
         return None
