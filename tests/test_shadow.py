@@ -89,3 +89,36 @@ def test_large_rule_set_is_fast(tmp_path):
     start = time.perf_counter()
     find_shadowed(resolved)
     assert time.perf_counter() - start < 10
+
+
+# ---------------------------------------------------------------------------
+# Keys that restrict the earlier rule (assumption U6)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def restricting():
+    resolved = resolve_config(parse_file(FIXTURES / "res_shadow_restricting.conf"))
+    return {(s.shadowed.section, s.shadowed.policy_id): s for s in find_shadowed(resolved)}
+
+
+def test_restricting_keys_are_listed():
+    from fortidoc.core.shadow import RESTRICTING_KEYS
+
+    for key in (
+        "fsso-groups", "devices", "src-vendor-mac", "ztna-ems-tag", "ztna-geo-tag",
+        "ztna-status", "tos", "ha-mgmt-intf-only",
+    ):  # fmt: skip
+        assert key in RESTRICTING_KEYS
+
+
+def test_earlier_rule_with_restricting_key_does_not_shadow(restricting):
+    assert ("firewall policy", "2") not in restricting  # 1 only for FSSO groups
+    assert ("firewall policy", "4") not in restricting  # 3 only for ZTNA tags
+    assert ("firewall local-in-policy", "2") not in restricting  # 1 only on the HA management interface
+
+
+def test_other_unknown_keys_still_shadow_with_a_note(restricting):
+    hit = restricting[("firewall policy", "6")]
+    assert hit.by.policy_id == "5"
+    assert any("synthetic-unknown-key" in note for note in hit.notes)

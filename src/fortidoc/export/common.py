@@ -134,6 +134,8 @@ def policy_service_objects(p: ResolvedPolicy) -> list[str]:
 
 def policy_notes(p: ResolvedPolicy) -> list[str]:
     notes = list(p.notes)
+    if p.table == "inspection":
+        notes.append("SSL-Inspection und Authentifizierung (NGFW-Modus richtlinienbasiert), keine Zugriffsregel.")
     if p.section == "firewall security-policy":
         notes.append("Security-Policy (NGFW-Modus richtlinienbasiert).")
     elif p.section.startswith("firewall local-in"):
@@ -180,6 +182,12 @@ def status_text(p: ResolvedPolicy) -> str:
 # ---------------------------------------------------------------------------
 
 
+NGFW_LABELS = {
+    "profile-based": "profilbasiert",
+    "policy-based": "richtlinienbasiert (Regelwerk aus Security-Policies)",
+}
+
+
 def overview_rows(resolved: ResolvedConfig, findings: list[Finding], created_at: datetime) -> list[list[object]]:
     d = resolved.device
     rows: list[list[object]] = [
@@ -203,6 +211,8 @@ def overview_rows(resolved: ResolvedConfig, findings: list[Finding], created_at:
             [f"VDOM {vdom.name}: davon aktiv", sum(1 for p in rules if p.enabled)],
             [f"VDOM {vdom.name}: davon deaktiviert", sum(1 for p in rules if not p.enabled)],
             [f"VDOM {vdom.name}: Local-In-Regeln", len(vdom.local_in)],
+            [f"VDOM {vdom.name}: NGFW-Modus", NGFW_LABELS.get(vdom.ngfw_mode, vdom.ngfw_mode)],
+            [f"VDOM {vdom.name}: SSL-Inspection-Regeln", len(vdom.inspection)],
             [f"VDOM {vdom.name}: Adressobjekte", len(vdom.addresses)],
             [f"VDOM {vdom.name}: Dienstobjekte", len(vdom.services)],
             [f"VDOM {vdom.name}: VIPs", len(vdom.vips)],

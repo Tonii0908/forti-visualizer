@@ -67,6 +67,7 @@
       "name": "root",
       "central_nat": false,
       "opmode": "nat",
+      "ngfw_mode": "profile-based",
       "notes": [],
       "zones": [
         {
@@ -100,6 +101,7 @@
       "policies": [
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 1,
           "policy_id": "1",
@@ -270,6 +272,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 2,
           "policy_id": "2",
@@ -494,6 +497,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "firewall policy",
           "position": 3,
           "policy_id": "3",
@@ -725,6 +729,7 @@
         },
         {
           "vdom": "root",
+          "table": "policy",
           "section": "implicit",
           "position": 4,
           "policy_id": "0",
@@ -833,6 +838,7 @@
         }
       ],
       "local_in": [],
+      "inspection": [],
       "addresses": [
         {
           "name": "all",

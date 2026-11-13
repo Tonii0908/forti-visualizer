@@ -15,8 +15,11 @@ The check is conservative: it only reports what it can prove.
 - Further conditions of A must not restrict it: users/groups (unless B has the
   same), a schedule other than "always" (unless B has the same).
 
-Criteria fortidoc does not evaluate (keys outside the data model) are named
-in a note when A has them. See ANNAHMEN.md, U1-U4.
+- A rule with a key from RESTRICTING_KEYS (FSSO groups, devices, ZTNA tags,
+  ...) never shadows: it matches only part of its address/service traffic.
+
+Other criteria fortidoc does not evaluate (keys outside the data model) are
+named in a note when A has them. See ANNAHMEN.md, U1-U6.
 """
 
 from __future__ import annotations
@@ -34,6 +37,15 @@ _PROTOCOL_NUMBERS = {"TCP": 6, "UDP": 17, "SCTP": 132, "ICMP": 1, "ICMP6": 58}
 _ALL_PORTS = (0, 65535)
 
 Intervals = dict[int, list[tuple[int, int]]]
+
+# ASSUMPTION(U6): keys that restrict the traffic of a rule beyond zones, addresses and services.
+# A rule with one of them never shadows a later rule (list given by Toni).
+RESTRICTING_KEYS = frozenset(
+    {
+        "fsso-groups", "devices", "src-vendor-mac", "ztna-ems-tag", "ztna-ems-tag-secondary",
+        "ztna-geo-tag", "ztna-status", "tos", "tos-mask", "ha-mgmt-intf-only",
+    }
+)  # fmt: skip
 
 
 @dataclass
@@ -176,6 +188,7 @@ def _rule(index: int, p: ResolvedPolicy) -> _Rule:
     plain = not (p.source.negate or p.destination.negate or p.service.negate)
     plain = plain and not (p.source.internet_services or p.destination.internet_services)
     plain = plain and not p.applications  # matches only part of its address/service traffic
+    plain = plain and not RESTRICTING_KEYS.intersection(p.unknown_keys)
     return _Rule(
         index=index,
         policy=p,
@@ -259,7 +272,7 @@ def find_shadowed(resolved: ResolvedConfig) -> list[Shadowing]:
     result: list[Shadowing] = []
     for vdom in resolved.vdoms:
         tables: dict[str, list[ResolvedPolicy]] = {}
-        for p in [*vdom.policies, *vdom.local_in]:
+        for p in [*vdom.policies, *vdom.local_in, *vdom.inspection]:
             if not p.implicit:
                 tables.setdefault(p.section, []).append(p)
         for policies in tables.values():

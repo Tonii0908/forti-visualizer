@@ -74,6 +74,7 @@ def test_sheet_names_and_order(findings_book):
         "Übersicht",
         "Policies",
         "Local-In",
+        "SSL-Inspection",
         "Adressen",
         "Dienste",
         "NAT",

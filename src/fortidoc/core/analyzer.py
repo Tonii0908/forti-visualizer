@@ -62,7 +62,7 @@ def analyze(tree: ConfigTree, resolved: ResolvedConfig) -> list[Finding]:
     findings: list[Finding] = []
     shadowed = {id(s.shadowed): s for s in find_shadowed(resolved)}
     for vdom in resolved.vdoms:
-        for policy in [*vdom.policies, *vdom.local_in]:
+        for policy in [*vdom.policies, *vdom.local_in, *vdom.inspection]:
             if not policy.implicit:
                 findings.extend(_policy_findings(policy))
                 hit = shadowed.get(id(policy))
@@ -160,8 +160,8 @@ def _axis(used: list[str], known: list[str]) -> list[str]:
 
 
 def rule_kind(policy: ResolvedPolicy) -> str:
-    """'Regel' or 'Local-In-Regel': the two tables number their positions separately."""
-    return "Local-In-Regel" if policy.section.startswith("firewall local-in") else "Regel"
+    """Object kind of a rule; each table numbers its positions separately."""
+    return {"local-in": "Local-In-Regel", "inspection": "SSL-Inspection-Regel"}.get(policy.table, "Regel")
 
 
 def _finding(policy: ResolvedPolicy, category: str, detail: str) -> Finding:
@@ -197,6 +197,11 @@ def _policy_findings(policy: ResolvedPolicy) -> Iterable[Finding]:
         yield _finding(policy, CAT_DISABLED, "Die Regel ist deaktiviert (status disable).")
     if policy.action != "accept":
         return
+    if policy.table == "inspection":
+        # Inspection rules decide about SSL inspection and authentication, not about access:
+        # 'ACCEPT mit all/ALL' and 'ACCEPT ohne Logging' do not apply (Vorgabe Toni).
+        yield from _no_subnet_findings(policy)
+        return
 
     parts = []
     sides = [("Quelle", policy.source), ("Ziel", policy.destination)]
@@ -219,6 +224,13 @@ def _policy_findings(policy: ResolvedPolicy) -> Iterable[Finding]:
     if parts:
         yield _finding(policy, CAT_ALL, "; ".join(parts))
 
+    yield from _no_subnet_findings(policy)
+
+    if policy.logtraffic == "disable":
+        yield _finding(policy, CAT_NO_LOGGING, "Logging ist deaktiviert (logtraffic disable).")
+
+
+def _no_subnet_findings(policy: ResolvedPolicy) -> Iterable[Finding]:
     no_subnet = []
     for label, side in (("Quelle", policy.source), ("Ziel", policy.destination)):
         hits = _any_values(side, from_default=True)
@@ -232,9 +244,6 @@ def _policy_findings(policy: ResolvedPolicy) -> Iterable[Finding]:
             + ". Das Objekt hat kein subnet im Backup; der FortiOS-Default 0.0.0.0/0 bzw. ::/0 "
             "ist angenommen, der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
         )
-
-    if policy.logtraffic == "disable":
-        yield _finding(policy, CAT_NO_LOGGING, "Logging ist deaktiviert (logtraffic disable).")
 
 
 # ---------------------------------------------------------------------------

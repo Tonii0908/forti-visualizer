@@ -114,11 +114,11 @@ def test_local_in_in_report(local_in):
 # ---------------------------------------------------------------------------
 
 
-def test_security_policies_join_the_rule_table(security):
+def test_security_policies_form_the_rule_table(security):
+    # ngfw-mode policy-based: firewall policy 1 is an SSL inspection rule (test_ngfw_mode.py).
     _, resolved, _ = security
     sections = [(p.section, p.policy_id) for p in resolved.vdoms[0].policies if not p.implicit]
     assert sections == [
-        ("firewall policy", "1"),
         ("firewall security-policy", "1"),
         ("firewall security-policy", "2"),
         ("firewall security-policy", "3"),
@@ -147,7 +147,7 @@ def test_security_policy_counts_in_the_matrix(security):
     _, resolved, _ = security
     (matrix,) = zone_matrix(resolved)
     cell = next(c for c in matrix.cells if c.src == "port1" and c.dst == "port2")
-    assert len(cell.positions) == 5
+    assert len(cell.positions) == 4
 
 
 def test_application_rule_is_covered_by_rule_without_application(security):

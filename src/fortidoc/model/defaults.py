@@ -53,6 +53,7 @@ DEFAULTS: dict[str, dict[str, list[str]]] = {
     "system settings": {
         "central-nat": ["disable"],  # ASSUMPTION(D10)
         "opmode": ["nat"],  # ASSUMPTION(D10)
+        "ngfw-mode": ["profile-based"],  # ASSUMPTION(N5)
     },
     "system zone": {"intrazone": ["deny"]},  # ASSUMPTION(D11)
     "system interface": {"vdom": ["root"]},  # ASSUMPTION(D12)

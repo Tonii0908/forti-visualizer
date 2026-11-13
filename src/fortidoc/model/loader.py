@@ -103,7 +103,7 @@ KNOWN_KEYS: dict[str, frozenset[str]] = {
     "system sdwan > members": frozenset({"interface", "zone"}),
     "system virtual-wan-link": frozenset({"status"}),
     "system virtual-wan-link > members": frozenset({"interface"}),
-    "system settings": frozenset({"central-nat", "opmode"}),
+    "system settings": frozenset({"central-nat", "opmode", "ngfw-mode"}),
     "firewall address": frozenset(
         {"uuid", "type", "subnet", "start-ip", "end-ip", "fqdn", "wildcard", "country",
          "sub-type", "sdn", "filter", "interface", "macaddr", "comment"}
