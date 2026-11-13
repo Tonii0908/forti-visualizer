@@ -64,6 +64,10 @@ from fortidoc.model.schema import (
 
 REPORT_NAME = "report.html"
 SEARCH_NOTICE = "Die Suche wertet nur das Regelwerk aus, kein Routing."
+FIRST_MATCH_NOTICE = (
+    "Auf dem Gerät gilt die erste passende Regel. Der Report prüft keine Überdeckung; "
+    "die Treffer stehen in Regelreihenfolge."
+)
 
 _PORT_PROTOCOLS = ("TCP", "UDP", "SCTP")
 
@@ -143,16 +147,20 @@ def _ip_interval(text: str | None) -> list[object] | None:
 
 
 def _vip_intervals(vip: VipMapping) -> list[list[object]]:
-    """External and mapped addresses of a VIP: both are matched by the search (assumption R1)."""
-    found = [_ip_interval(vip.ext_ip)] + [_ip_interval(m) for m in vip.mapped_ips]
-    return [iv for iv in found if iv is not None]
+    """External and mapped addresses of a VIP: both are matched by the search (assumption R1).
+
+    Each interval ends with "extern" or "intern", so a hit can say which side matched.
+    """
+    found = [(_ip_interval(vip.ext_ip), "extern")] + [(_ip_interval(m), "intern") for m in vip.mapped_ips]
+    return [iv + [side] for iv, side in found if iv is not None]
 
 
 def _value_entry(value: ResolvedValue) -> list[object]:
     """[kind, text, note, reason, from_default (0/1), intervals, ip_version].
 
     intervals: [[version, low, high], ...] with low/high as decimal strings,
-    empty for values the search cannot compare (FQDN, not resolvable).
+    empty for values the search cannot compare (FQDN, not resolvable). VIP
+    intervals carry a fourth element, "extern" or "intern".
     """
     intervals: list[list[object]] = []
     if value.kind in ("network", "range"):
@@ -334,6 +342,7 @@ def render_report(resolved: ResolvedConfig, findings: list[Finding], created_at:
         counts=data["counts"],
         total_findings=len(findings),
         search_notice=SEARCH_NOTICE,
+        first_match_notice=FIRST_MATCH_NOTICE,
         csp=Markup(content_security_policy()),
         style=Markup(report_style()),
         script=Markup(report_script()),

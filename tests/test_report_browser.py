@@ -26,21 +26,31 @@ sync_api = pytest.importorskip("playwright.sync_api")
 CREATED = datetime(2026, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 
 
-@pytest.fixture(scope="module")
-def browser():
+# Browsers to test, e.g. FORTIDOC_BROWSERS=chromium,firefox (CI). Edge is Chromium.
+BROWSERS = [b.strip() for b in os.environ.get("FORTIDOC_BROWSERS", "chromium").split(",") if b.strip()]
+
+
+@pytest.fixture(scope="module", params=BROWSERS)
+def browser(request):
+    name = request.param
     with sync_api.sync_playwright() as p:
-        candidates = [None, os.environ.get("FORTIDOC_CHROMIUM"), "/opt/pw-browsers/chromium"]
+        engine = getattr(p, name)
+        candidates = [None]
+        if name == "chromium":
+            candidates += [os.environ.get("FORTIDOC_CHROMIUM"), "/opt/pw-browsers/chromium"]
         last_error = None
         for path in candidates:
             if path is not None and not Path(path).exists():
                 continue
             try:
-                instance = p.chromium.launch(executable_path=path) if path else p.chromium.launch()
+                instance = engine.launch(executable_path=path) if path else engine.launch()
                 break
             except Exception as exc:  # noqa: BLE001 - any launch failure means "no browser here"
                 last_error = exc
         else:
-            pytest.skip(f"Chromium nicht verfügbar: {last_error}")
+            if os.environ.get("FORTIDOC_REQUIRE_BROWSERS"):
+                pytest.fail(f"{name} nicht verfügbar: {last_error}")
+            pytest.skip(f"{name} nicht verfügbar: {last_error}")
         yield instance
         instance.close()
 
@@ -169,14 +179,39 @@ def test_port_search_by_protocol(open_report):
     assert page.ids("rules-main") == ["7", "8", "14", "15", IMPLICIT]
 
 
+def row_text(page, container: str, policy_id: str) -> str:
+    return page.page.locator(f"#{container} tr[data-key$='|{policy_id}']").inner_text()
+
+
 def test_destination_search_matches_vip_external_and_mapped(open_report):
     page = open_report("res_search.conf")
     page.search(ip="203.0.113.10", side="dst")
     sure = page.ids("rules-main")
     assert "13" in sure and "1" not in sure
+    assert "externe Adresse der VIP" in row_text(page, "rules-main", "13")
+    assert "interne Adresse" not in row_text(page, "rules-main", "13")
     page.search(ip="192.168.50.10", side="dst")
     sure = page.ids("rules-main")
     assert "1" in sure and "13" in sure
+    assert "interne Adresse der VIP" in row_text(page, "rules-main", "13")
+    assert "VIP" not in row_text(page, "rules-main", "1").split("srv-dmz")[0]
+
+
+def test_vip_hit_label_with_both_sides_searched(open_report):
+    page = open_report("res_search.conf")
+    page.search(ip="203.0.113.10", side="both")
+    assert "Ziel: externe Adresse der VIP" in row_text(page, "rules-main", "13")
+
+
+def test_hits_are_listed_in_rule_order(open_report):
+    page = open_report("res_search.conf")
+    page.search(ip="10.10.20.15", side="src")
+    positions = page.page.eval_on_selector_all(
+        "#rules-main tbody tr", "rows => rows.map(r => Number(r.dataset.key.split('|')[1]))"
+    )
+    assert positions == sorted(positions)
+    text = page.page.locator("#view-rules").inner_text()
+    assert "erste passende Regel" in text and "Überdeckung" in text
 
 
 def test_network_search_partial_overlap_is_possible(open_report):
@@ -291,8 +326,9 @@ def test_print_builds_the_complete_document(open_report):
     rows = area.locator("section.pr-section").nth(1).locator("tbody tr").count()
     assert rows == len(resolve_config(parse_file(FIXTURES / "res_findings.conf")).vdoms[0].policies)
     assert page.page.locator("#cover").is_visible()
-    pdf = page.page.pdf(format="A4", landscape=True)
-    assert pdf[:4] == b"%PDF"
+    if page.page.context.browser.browser_type.name == "chromium":  # PDF export exists only in Chromium
+        pdf = page.page.pdf(format="A4", landscape=True)
+        assert pdf[:4] == b"%PDF"
 
 
 @pytest.mark.skipif(not os.environ.get("FORTIDOC_PERF"), reason="Lasttest nur mit FORTIDOC_PERF=1")
