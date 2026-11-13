@@ -125,7 +125,8 @@
                   "net-a"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "range",
@@ -138,7 +139,8 @@
                   "range-c"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "network",
@@ -150,7 +152,8 @@
                   "net-b"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "network",
@@ -161,7 +164,8 @@
                   "host-1"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -182,7 +186,8 @@
                   "net-a"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "network",
@@ -194,7 +199,8 @@
                   "net-b"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "unresolvable",
@@ -206,7 +212,8 @@
                   "grp-loop-a"
                 ],
                 "note": "Zirkelbezug: grp-loop-a > grp-loop-b > grp-loop-a",
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -308,7 +315,8 @@
                   "grp-exclude"
                 ],
                 "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude'.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "range",
@@ -318,7 +326,8 @@
                   "grp-exclude"
                 ],
                 "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude'.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "range",
@@ -328,7 +337,8 @@
                   "grp-exclude"
                 ],
                 "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude'.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -349,7 +359,8 @@
                   "grp-exclude-fqdn"
                 ],
                 "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude-fqdn'.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "range",
@@ -359,7 +370,8 @@
                   "grp-exclude-fqdn"
                 ],
                 "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude-fqdn'.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "fqdn",
@@ -370,7 +382,8 @@
                   "fqdn-x"
                 ],
                 "note": "Der Ausschluss (exclude-member) ist auf FQDN- und nicht auflösbare Werte nicht anwendbar.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "network",
@@ -381,7 +394,8 @@
                   "net-a"
                 ],
                 "note": "In Gruppe 'grp-exclude-disabled' ist exclude-member gesetzt, aber 'exclude' ist nicht aktiviert; der Ausschluss wird nicht angewendet.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -484,7 +498,8 @@
                   "net-a"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "unresolvable",
@@ -495,7 +510,8 @@
                   "does-not-exist"
                 ],
                 "note": "Objekt 'does-not-exist' nicht gefunden (in den ausgewerteten Abschnitten).",
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -515,7 +531,8 @@
                   "all"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -613,7 +630,8 @@
                 "ip_version": 4,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -629,7 +647,8 @@
                 "ip_version": 4,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -688,7 +707,8 @@
                 "all"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -710,7 +730,8 @@
                 "net-a"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -732,7 +753,8 @@
                 "net-b"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -754,7 +776,8 @@
                 "net-big"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -776,7 +799,8 @@
                 "host-1"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -798,7 +822,8 @@
                 "range-c"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -820,7 +845,8 @@
                 "fqdn-x"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -846,7 +872,8 @@
                 "net-a"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "range",
@@ -857,7 +884,8 @@
                 "range-c"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -884,7 +912,8 @@
                 "net-a"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "range",
@@ -896,7 +925,8 @@
                 "range-c"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "network",
@@ -907,7 +937,8 @@
                 "net-b"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -935,7 +966,8 @@
                 "net-a"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "range",
@@ -948,7 +980,8 @@
                 "range-c"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "network",
@@ -960,7 +993,8 @@
                 "net-b"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "network",
@@ -971,7 +1005,8 @@
                 "host-1"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -997,7 +1032,8 @@
                 "net-a"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "network",
@@ -1009,7 +1045,8 @@
                 "net-b"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "unresolvable",
@@ -1021,7 +1058,8 @@
                 "grp-loop-a"
               ],
               "note": "Zirkelbezug: grp-loop-a > grp-loop-b > grp-loop-a",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -1047,7 +1085,8 @@
                 "net-b"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "network",
@@ -1059,7 +1098,8 @@
                 "net-a"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "unresolvable",
@@ -1071,7 +1111,8 @@
                 "grp-loop-b"
               ],
               "note": "Zirkelbezug: grp-loop-b > grp-loop-a > grp-loop-b",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -1098,7 +1139,8 @@
                 "grp-exclude"
               ],
               "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude'.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "range",
@@ -1108,7 +1150,8 @@
                 "grp-exclude"
               ],
               "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude'.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "range",
@@ -1118,7 +1161,8 @@
                 "grp-exclude"
               ],
               "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude'.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -1145,7 +1189,8 @@
                 "grp-exclude-fqdn"
               ],
               "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude-fqdn'.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "range",
@@ -1155,7 +1200,8 @@
                 "grp-exclude-fqdn"
               ],
               "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude-fqdn'.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "fqdn",
@@ -1166,7 +1212,8 @@
                 "fqdn-x"
               ],
               "note": "Der Ausschluss (exclude-member) ist auf FQDN- und nicht auflösbare Werte nicht anwendbar.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -1193,7 +1240,8 @@
                 "net-a"
               ],
               "note": "In Gruppe 'grp-exclude-disabled' ist exclude-member gesetzt, aber 'exclude' ist nicht aktiviert; der Ausschluss wird nicht angewendet.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -1219,7 +1267,8 @@
                 "net-a"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "unresolvable",
@@ -1230,7 +1279,8 @@
                 "does-not-exist"
               ],
               "note": "Objekt 'does-not-exist' nicht gefunden (in den ausgewerteten Abschnitten).",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,

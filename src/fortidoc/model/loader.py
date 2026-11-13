@@ -21,6 +21,8 @@ EVALUATED_SECTIONS: dict[tuple[str, ...], str] = {
     ("system", "interface"): "system interface",
     ("system", "zone"): "system zone",
     ("system", "sdwan"): "system sdwan",
+    # ASSUMPTION(A7): FortiOS 6.0/6.2 name of the SD-WAN settings.
+    ("system", "virtual-wan-link"): "system virtual-wan-link",
     ("system", "settings"): "system settings",
     ("firewall", "address"): "firewall address",
     ("firewall", "addrgrp"): "firewall addrgrp",
@@ -40,13 +42,16 @@ EVALUATED_SECTIONS: dict[tuple[str, ...], str] = {
 GLOBAL_SECTIONS = frozenset({"system interface"})
 
 # Sections that are one settings block instead of a table of edits.
-SETTINGS_SECTIONS = frozenset({"system settings", "system sdwan"})
+SETTINGS_SECTIONS = frozenset({"system settings", "system sdwan", "system virtual-wan-link"})
 
 # Evaluated nested blocks: section -> nested path -> label.
 SUBSECTIONS: dict[str, dict[tuple[str, ...], str]] = {
     "system sdwan": {
         ("zone",): "system sdwan > zone",
         ("members",): "system sdwan > members",
+    },
+    "system virtual-wan-link": {
+        ("members",): "system virtual-wan-link > members",
     },
 }
 
@@ -72,6 +77,8 @@ KNOWN_KEYS: dict[str, frozenset[str]] = {
     "system sdwan": frozenset({"status"}),
     "system sdwan > zone": frozenset(),
     "system sdwan > members": frozenset({"interface", "zone"}),
+    "system virtual-wan-link": frozenset({"status"}),
+    "system virtual-wan-link > members": frozenset({"interface"}),
     "system settings": frozenset({"central-nat", "opmode"}),
     "firewall address": frozenset(
         {"uuid", "type", "subnet", "start-ip", "end-ip", "fqdn", "wildcard", "country",

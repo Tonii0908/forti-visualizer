@@ -66,6 +66,12 @@ DEFAULTS["firewall policy6"] = DEFAULTS["firewall policy"]
 # ASSUMPTION(D14): FortiOS reports the implicit deny as policy ID 0.
 IMPLICIT_DENY_ID = "0"
 
+# Predefined address objects that stand for "every address" even though the
+# backup lists them without subnet/ip6. They are not flagged as "kein subnet".
+# ASSUMPTION(D15): FortiOS defines 'all' (IPv4 and IPv6) as 0.0.0.0/0 and ::/0;
+# 'all6' is treated the same (decided by Toni).
+PREDEFINED_ANY_ADDRESSES = frozenset({"all", "all6"})
+
 # Interface types -> German label for the documentation.
 INTERFACE_TYPE_LABELS: dict[str, str] = {
     "physical": "physisch",

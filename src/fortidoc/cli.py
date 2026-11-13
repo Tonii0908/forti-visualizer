@@ -12,8 +12,10 @@ from typing import Annotated, Optional
 import typer
 
 from fortidoc import __version__
+from fortidoc.core.analyzer import analyze
 from fortidoc.core.resolver import resolve_config
 from fortidoc.errors import FortidocError
+from fortidoc.export.excel import WORKBOOK_NAME, write_workbook
 from fortidoc.model.schema import AddressSide, ResolvedConfig, ResolvedPolicy
 from fortidoc.parser.conf_parser import ConfigNode, ConfigTree, EditNode, iter_nodes, parse_file
 
@@ -66,12 +68,32 @@ def main(
     if input_file is None and output_dir is None:
         typer.echo(ctx.get_help())
         raise typer.Exit()
-    typer.echo(
-        "Die Erzeugung von regelwerk.xlsx und report.html folgt in Stufe 3 und 4 und ist noch "
-        "nicht verfügbar. Verfügbar ist: fortidoc parse <datei> [--json]",
-        err=True,
-    )
-    raise typer.Exit(2)
+    if input_file is None or output_dir is None:
+        typer.echo("Fehler: --input und --output müssen zusammen angegeben werden.", err=True)
+        raise typer.Exit(2)
+    _generate(input_file, output_dir)
+
+
+def _generate(input_file: Path, output_dir: Path) -> None:
+    """Parse, resolve and analyse the backup, then write regelwerk.xlsx."""
+    try:
+        tree = parse_file(input_file)
+    except FortidocError as exc:
+        typer.echo(f"Fehler: {exc}", err=True)
+        raise typer.Exit(1) from None
+    for warning in tree.warnings:
+        typer.echo(f"Hinweis: {'Zeile ' + str(warning.line) + ': ' if warning.line else ''}{warning.message}", err=True)
+    resolved = resolve_config(tree)
+    findings = analyze(tree, resolved)
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        workbook = write_workbook(resolved, findings, output_dir / WORKBOOK_NAME, _now())
+    except OSError as exc:
+        typer.echo(f"Fehler: Ausgabe konnte nicht geschrieben werden: {exc.strerror or exc}", err=True)
+        raise typer.Exit(1) from None
+    typer.echo(f"Geschrieben: {workbook}")
+    typer.echo(f"Auffälligkeiten: {len(findings)}")
+    typer.echo("Hinweis: report.html folgt in Stufe 4.", err=True)
 
 
 @app.command("parse")
@@ -184,6 +206,10 @@ def _resolved_summary(tree: ConfigTree, resolved: ResolvedConfig) -> str:
     return "\n".join(lines)
 
 
+def _now() -> datetime:
+    return datetime.now(timezone.utc).replace(microsecond=0)
+
+
 def _meta(tree: ConfigTree) -> dict:
     source = tree.source
     return {
@@ -193,7 +219,7 @@ def _meta(tree: ConfigTree) -> dict:
         "input_sha256": source.sha256 if source else None,
         "input_size_bytes": source.size_bytes if source else None,
         "fortios_version": tree.header.version,
-        "created_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "created_at": _now().isoformat(),
     }
 
 

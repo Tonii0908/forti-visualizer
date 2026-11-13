@@ -122,7 +122,8 @@
                   "all"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -142,7 +143,8 @@
                   "all"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -245,7 +247,8 @@
                   "v6-lan"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "range",
@@ -256,7 +259,8 @@
                   "v6-range"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -276,7 +280,8 @@
                   "all"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -378,7 +383,8 @@
                   "v6-fqdn"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -398,7 +404,8 @@
                   "all"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -497,7 +504,8 @@
                 "ip_version": 4,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "network",
@@ -505,7 +513,8 @@
                 "ip_version": 6,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -521,7 +530,8 @@
                 "ip_version": 4,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "network",
@@ -529,7 +539,8 @@
                 "ip_version": 6,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -588,7 +599,8 @@
                 "all"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -610,7 +622,8 @@
                 "all"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -632,7 +645,8 @@
                 "v6-lan"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -654,7 +668,8 @@
                 "v6-range"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -676,7 +691,8 @@
                 "v6-fqdn"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -702,7 +718,8 @@
                 "v6-lan"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "range",
@@ -713,7 +730,8 @@
                 "v6-range"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,

@@ -152,7 +152,8 @@
                   "a-ipmask"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "network",
@@ -162,7 +163,8 @@
                   "a-hostbits"
                 ],
                 "note": "Hostbits gesetzt (10.0.1.5/24); als Netz 10.0.1.0/24 ausgewertet.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "range",
@@ -172,7 +174,8 @@
                   "a-iprange"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "network",
@@ -182,7 +185,8 @@
                   "a-wildcard-contiguous"
                 ],
                 "note": "Wildcard mit zusammenhängender Maske, als Netz dargestellt.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "unresolvable",
@@ -192,7 +196,8 @@
                   "a-wildcard"
                 ],
                 "note": "Wildcard-Maske ist nicht zusammenhängend und lässt sich nicht als Netz oder Bereich darstellen.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -218,7 +223,8 @@
                   "a-fqdn"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "unresolvable",
@@ -228,7 +234,8 @@
                   "a-geo"
                 ],
                 "note": "Geo-Adresse (Land DE): Die Zuordnung zu IP-Adressen liegt nur in der Datenbank auf dem Gerät.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "unresolvable",
@@ -238,7 +245,8 @@
                   "a-dynamic"
                 ],
                 "note": "Dynamische Adresse (sub-type sdn, sdn cloud-connector, filter Tag.env=prod) wird erst auf dem Gerät aufgelöst.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "network",
@@ -248,7 +256,8 @@
                   "a-ifsubnet"
                 ],
                 "note": "Netz des Interfaces port2.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "unresolvable",
@@ -258,7 +267,8 @@
                   "a-ifsubnet-unknown"
                 ],
                 "note": "Interface 'no-such-port' nicht gefunden oder ohne IP-Adresse.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "unresolvable",
@@ -268,7 +278,8 @@
                   "a-mac"
                 ],
                 "note": "MAC-Adresse: kein IP-Wert, die Zuordnung erfolgt auf dem Gerät.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "unresolvable",
@@ -278,7 +289,8 @@
                   "a-future-type"
                 ],
                 "note": "Unbekannter Adresstyp 'something-new'.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -376,7 +388,8 @@
                 "ip_version": 4,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -392,7 +405,8 @@
                 "ip_version": 4,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -451,7 +465,8 @@
                 "all"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -473,7 +488,8 @@
                 "a-ipmask"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -495,7 +511,8 @@
                 "a-hostbits"
               ],
               "note": "Hostbits gesetzt (10.0.1.5/24); als Netz 10.0.1.0/24 ausgewertet.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -517,7 +534,8 @@
                 "a-iprange"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -539,7 +557,8 @@
                 "a-fqdn"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -561,7 +580,8 @@
                 "a-wildcard-contiguous"
               ],
               "note": "Wildcard mit zusammenhängender Maske, als Netz dargestellt.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -583,7 +603,8 @@
                 "a-wildcard"
               ],
               "note": "Wildcard-Maske ist nicht zusammenhängend und lässt sich nicht als Netz oder Bereich darstellen.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -605,7 +626,8 @@
                 "a-geo"
               ],
               "note": "Geo-Adresse (Land DE): Die Zuordnung zu IP-Adressen liegt nur in der Datenbank auf dem Gerät.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -627,7 +649,8 @@
                 "a-dynamic"
               ],
               "note": "Dynamische Adresse (sub-type sdn, sdn cloud-connector, filter Tag.env=prod) wird erst auf dem Gerät aufgelöst.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -649,7 +672,8 @@
                 "a-ifsubnet"
               ],
               "note": "Netz des Interfaces port2.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -671,7 +695,8 @@
                 "a-ifsubnet-unknown"
               ],
               "note": "Interface 'no-such-port' nicht gefunden oder ohne IP-Adresse.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -693,7 +718,8 @@
                 "a-mac"
               ],
               "note": "MAC-Adresse: kein IP-Wert, die Zuordnung erfolgt auf dem Gerät.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -715,7 +741,8 @@
                 "a-future-type"
               ],
               "note": "Unbekannter Adresstyp 'something-new'.",
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -737,7 +764,8 @@
                 "all"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -759,7 +787,8 @@
                 "a6-prefix"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -781,7 +810,8 @@
                 "a6-range"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -803,7 +833,8 @@
                 "a6-fqdn"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -829,7 +860,8 @@
                 "a6-prefix"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             },
             {
               "kind": "range",
@@ -840,7 +872,8 @@
                 "a6-range"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,

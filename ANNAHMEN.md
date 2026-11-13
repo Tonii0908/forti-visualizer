@@ -83,6 +83,7 @@ vorgegeben. Alle anderen Defaults sind Annahmen.
 | D12 | Interface ohne `set vdom` gehört zu `root` (mit Hinweis am Interface). | Interface im falschen VDOM, falsche Hinweise in Regeln. |
 | D13 | SD-WAN-Mitglied ohne `set zone` gehört zur Zone `virtual-wan-link`. | Interface in falscher Zone. |
 | D14 | Die implizite Deny-Regel trägt die ID 0. | Nur Anzeige. |
+| D15 | Die Objekte `all` und `all6` (in `firewall address` und `firewall address6`) sind auch ohne `subnet`/`ip6` im Backup `0.0.0.0/0` bzw. `::/0`. Es bekommt keinen Hinweis „kein subnet“ und gilt als „all“. | „all“-Regeln würden als „Adresse ohne subnet“ gemeldet. |
 
 ## Auflösung (Stufe 2)
 
@@ -92,5 +93,18 @@ vorgegeben. Alle anderen Defaults sind Annahmen.
 | A2 | Ein Interface ohne `type`, aber mit `vlanid`, ist ein VLAN. Ohne beides bleibt der Typ „nicht gesetzt“. | Typ falsch angezeigt. |
 | A3 | Bei Wildcard-Adressen sind gesetzte Bits in der Maske die verglichenen Bits (wie bei einer Netzmaske, nicht invertiert wie bei Cisco). Eine zusammenhängende Maske wird als Netz gezeigt, sonst „nicht auflösbar“. | Wildcard-Netze wären falsch. |
 | A4 | Objektnamen werden in dieser Reihenfolge gesucht: `firewall address`, `addrgrp`, `vip`, `vipgrp` (IPv6: `address6`, `addrgrp6`). `vip6` wird nicht ausgewertet; ein Verweis darauf erscheint als „nicht gefunden“. | Bei doppelten Namen würde das falsche Objekt genommen. |
-| A5 | Bei Central NAT gibt eine Regel einen Hinweis auf eine VIP, wenn die VIP auf ein Ziel der Regel übersetzt (Überlappung mit `mappedip`, ohne `0.0.0.0/0`) und das `extintf` der VIP zu einem Quell-Interface der Regel passt oder `any` ist. | Hinweise fehlen oder sind zu viel. |
+| A5 | Bei Central NAT gibt eine Regel einen Hinweis auf eine VIP, wenn die VIP auf ein Ziel der Regel übersetzt (Überlappung mit `mappedip`) und das `extintf` der VIP zu einem Quell-Interface der Regel passt oder `any` ist. Hat die Regel das Ziel `0.0.0.0/0`, gibt es statt vieler Einzelhinweise einen einzigen Hinweis: Alle VIPs mit passendem `extintf` wirken. | Hinweise fehlen oder sind zu viel. |
 | A6 | Ohne `ippool enable` übersetzt eine Policy mit `nat enable` auf die Adresse des Ausgangs-Interfaces. | NAT-Spalte falsch. |
+| A7 | FortiOS 6.0/6.2: `config system virtual-wan-link` wird wie `system sdwan` ausgewertet. Die Mitglieder stehen unter `config members` (`set interface`), Regeln verweisen auf das Interface `virtual-wan-link`. Alle Mitglieder gehören zur SD-WAN-Zone `virtual-wan-link`. Gibt es bereits ein echtes Interface mit diesem Namen, bleibt es unverändert. | Zonen und Interfaces von SD-WAN-Regeln auf 6.x wären falsch. |
+| A8 | Eine Adresse ohne `subnet` (IPv6: ohne `ip6`) bekommt den FortiOS-Default `0.0.0.0/0` bzw. `::/0` mit dem Hinweis „kein subnet im Backup, FortiOS-Default“. Das betrifft auch Sonderobjekte wie `FABRIC_DEVICE`, deren tatsächlicher Inhalt nur auf dem Gerät sichtbar ist. Solche Werte gelten nicht als „all“. Ausnahme sind `all` und `all6` (D15). | Sonderobjekte sähen wie „all“ aus oder wären falsch aufgelöst. |
+
+## Excel und Auffälligkeiten (Stufe 3)
+
+| Kennung | Annahme | Folge, wenn falsch |
+|---|---|---|
+| X1 | „ACCEPT mit all/ALL“ prüft aufgelöste Werte: ein Netz `0.0.0.0/0` oder `::/0`, das ausdrücklich im Backup steht, oder ein Dienst „IP alle Protokolle“ (`protocol IP`, `protocol-number 0`). Negierte Seiten („alles außer …“) zählen nicht. Deaktivierte ACCEPT-Regeln werden zusätzlich zu „Deaktivierte Regel“ geprüft. | „all“-Regeln würden übersehen oder zu viel gemeldet. |
+| X2 | Werte mit dem Hinweis aus A8 erscheinen als eigene Auffälligkeit „Adresse ohne subnet“. `all` und `all6` ohne `subnet`/`ip6` erscheinen dagegen als „all“ (D15, von Toni entschieden). | Sonderobjekte würden als „all“ gemeldet oder umgekehrt. |
+| X3 | „ACCEPT ohne Logging“ heißt `logtraffic disable`. `utm` (Default, D2) gilt als Logging. | Regeln, die nur Sicherheitsereignisse loggen, würden nicht gemeldet. |
+| X4 | Unbenutzte Objekte: Ein Objekt gilt als benutzt, wenn sein Name als Wert irgendeines `set` im gesamten Backup vorkommt (auch in nicht ausgewerteten Abschnitten, in `config global`, außerhalb von global/vdom und im eigenen VDOM; Verweise aus anderen VDOMs zählen nicht), außer im eigenen Eintrag. Kommentarfelder (`comment`, `comments`, `description`) und geschwärzte Werte zählen nicht. Geprüft werden Adressen, Adressgruppen (IPv4/IPv6), VIPs, VIP-Gruppen, IP-Pools, Dienste und Dienstgruppen. Vordefinierte Objekte (z. B. `FABRIC_DEVICE`, `ALL_TCP`) werden genauso geprüft. | Objekte würden fälschlich als unbenutzt oder benutzt gemeldet. |
+| X5 | Bei Central NAT wirken VIPs ohne Verweis in einer Regel. Sie werden daher nie als unbenutzt gemeldet. | VIPs würden fälschlich als unbenutzt gemeldet. |
+| X6 | Excel: Alle Texte aus dem Backup werden als Text geschrieben, nie als Formel. Zeichen, die XLSX nicht erlaubt (Steuerzeichen außer Tab und Zeilenumbruch), werden entfernt. Listen, die eine Zelle (32.767 Zeichen) sprengen würden, enden mit „… und N weitere“ und verweisen auf den Reiter Adressen bzw. Dienste; andere zu lange Texte enden mit „… (gekürzt)“. | Nur Darstellung. |

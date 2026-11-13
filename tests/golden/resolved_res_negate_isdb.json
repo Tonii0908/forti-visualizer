@@ -148,7 +148,8 @@
                   "net-guest"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -169,7 +170,8 @@
                   "Microsoft-Office365"
                 ],
                 "note": "Internet Service: Die zugehörigen Adressen und Dienste stehen nur in der Datenbank auf dem Gerät.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               },
               {
                 "kind": "unresolvable",
@@ -179,7 +181,8 @@
                   "Amazon-AWS"
                 ],
                 "note": "Internet Service: Die zugehörigen Adressen und Dienste stehen nur in der Datenbank auf dem Gerät.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -264,7 +267,8 @@
                   "all"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -284,7 +288,8 @@
                   "net-blocked"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -384,7 +389,8 @@
                   "Botnet-C&C.Server"
                 ],
                 "note": "Internet Service: Die zugehörigen Adressen und Dienste stehen nur in der Datenbank auf dem Gerät.",
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -404,7 +410,8 @@
                   "srv"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -501,7 +508,8 @@
                 "ip_version": 4,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -517,7 +525,8 @@
                 "ip_version": 4,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -576,7 +585,8 @@
                 "all"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -598,7 +608,8 @@
                 "net-guest"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -620,7 +631,8 @@
                 "net-blocked"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -642,7 +654,8 @@
                 "srv"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,

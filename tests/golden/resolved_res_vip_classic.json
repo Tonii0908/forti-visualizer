@@ -148,7 +148,8 @@
                   "all"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -189,7 +190,8 @@
                     "protocol"
                   ],
                   "unknown_keys": {}
-                }
+                },
+                "from_default": false
               }
             ]
           },
@@ -291,7 +293,8 @@
                   "all"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -334,7 +337,8 @@
                     "protocol"
                   ],
                   "unknown_keys": {}
-                }
+                },
+                "from_default": false
               },
               {
                 "kind": "vip",
@@ -367,7 +371,8 @@
                     "portforward"
                   ],
                   "unknown_keys": {}
-                }
+                },
+                "from_default": false
               },
               {
                 "kind": "vip",
@@ -397,7 +402,8 @@
                     "type"
                   ],
                   "unknown_keys": {}
-                }
+                },
+                "from_default": false
               }
             ]
           },
@@ -499,7 +505,8 @@
                   "all"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -519,7 +526,8 @@
                   "all"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -633,7 +641,8 @@
                 "ip_version": 4,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -649,7 +658,8 @@
                 "ip_version": 4,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -708,7 +718,8 @@
                 "all"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -751,7 +762,8 @@
                   "protocol"
                 ],
                 "unknown_keys": {}
-              }
+              },
+              "from_default": false
             }
           ],
           "comment": null,
@@ -795,7 +807,8 @@
                   "portforward"
                 ],
                 "unknown_keys": {}
-              }
+              },
+              "from_default": false
             }
           ],
           "comment": null,
@@ -837,7 +850,8 @@
                   "type"
                 ],
                 "unknown_keys": {}
-              }
+              },
+              "from_default": false
             }
           ],
           "comment": null,
@@ -884,7 +898,8 @@
                   "protocol"
                 ],
                 "unknown_keys": {}
-              }
+              },
+              "from_default": false
             },
             {
               "kind": "vip",
@@ -917,7 +932,8 @@
                   "portforward"
                 ],
                 "unknown_keys": {}
-              }
+              },
+              "from_default": false
             }
           ],
           "comment": null,

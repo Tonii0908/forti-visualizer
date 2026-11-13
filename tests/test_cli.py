@@ -71,10 +71,44 @@ def test_binary_file_is_rejected(fixture_path):
     assert "verschlüsselt" in result.stderr
 
 
-def test_main_command_not_yet_available(tmp_path, fixture_path):
-    result = run("--input", str(fixture_path("no_vdom.conf")), "--output", str(tmp_path))
+def test_main_command_writes_workbook(tmp_path, fixture_path):
+    out = tmp_path / "doku" / "neu"
+    result = run("--input", str(fixture_path("res_findings.conf")), "--output", str(out))
+    assert result.exit_code == 0, result.output
+    workbook = out / "regelwerk.xlsx"
+    assert workbook.exists()
+    assert str(workbook) in result.stdout
+    assert "report.html" in result.stderr  # follows in stage 4
+    import openpyxl
+
+    assert openpyxl.load_workbook(workbook).sheetnames[0] == "Übersicht"
+
+
+def test_main_command_short_options(tmp_path, fixture_path):
+    result = run("-i", str(fixture_path("res_no_vdom.conf")), "-o", str(tmp_path))
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "regelwerk.xlsx").exists()
+
+
+@pytest.mark.parametrize("args", [("--input", "x.conf"), ("--output", "out")])
+def test_main_command_needs_input_and_output(args):
+    result = run(*args)
     assert result.exit_code == 2
-    assert "Stufe" in result.stderr
+    assert "zusammen" in result.stderr
+
+
+def test_main_command_reports_parse_errors(tmp_path, fixture_path):
+    result = run("--input", str(fixture_path("encrypted_fgbk.conf")), "--output", str(tmp_path))
+    assert result.exit_code == 1
+    assert result.stderr.startswith("Fehler:")
+    assert not (tmp_path / "regelwerk.xlsx").exists()
+
+
+@pytest.mark.parametrize("path", valid_fixtures() + error_fixtures(), ids=lambda p: p.name)
+def test_no_secret_in_main_command_output(path, tmp_path):
+    result = run("--input", str(path), "--output", str(tmp_path))
+    assert SECRET_MARKER not in result.stdout
+    assert SECRET_MARKER not in result.stderr
 
 
 def test_version_option():
