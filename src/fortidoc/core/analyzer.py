@@ -1,4 +1,4 @@
-"""Findings ("Auffälligkeiten") on the resolved rule set.
+"""Zone matrix and findings ("Auffälligkeiten") on the resolved rule set.
 
 Rule checks work on resolved values, never on object names. The search for
 unused objects looks at references in the whole tree, including sections
@@ -10,7 +10,15 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from fortidoc.model.schema import AddressSide, Finding, ResolvedConfig, ResolvedPolicy
+from fortidoc.model.defaults import FACTORY_OBJECTS
+from fortidoc.model.schema import (
+    AddressSide,
+    Finding,
+    MatrixCell,
+    ResolvedConfig,
+    ResolvedPolicy,
+    ZoneMatrix,
+)
 from fortidoc.parser.conf_parser import ConfigNode, ConfigTree, EditNode, SetNode
 
 CAT_DISABLED = "Deaktivierte Regel"
@@ -18,6 +26,10 @@ CAT_ALL = "ACCEPT mit all/ALL"
 CAT_NO_SUBNET = "Adresse ohne subnet"
 CAT_NO_LOGGING = "ACCEPT ohne Logging"
 CAT_UNUSED = "Unbenutztes Objekt"
+CAT_UNUSED_FACTORY = "Unbenutztes Werksobjekt"
+
+# Every check, in the order the exports list them.
+CATEGORIES = [CAT_DISABLED, CAT_ALL, CAT_NO_SUBNET, CAT_NO_LOGGING, CAT_UNUSED, CAT_UNUSED_FACTORY]
 
 # Object sections checked for references -> German label.
 _OBJECT_SECTIONS: dict[tuple[str, ...], str] = {
@@ -44,6 +56,74 @@ def analyze(tree: ConfigTree, resolved: ResolvedConfig) -> list[Finding]:
                 findings.extend(_policy_findings(policy))
     findings.extend(_unused_objects(tree, resolved))
     return findings
+
+
+def count_by_category(findings: Iterable[Finding]) -> dict[str, int]:
+    """Number of findings per check, every check listed (also with 0)."""
+    counts = dict.fromkeys(CATEGORIES, 0)
+    for finding in findings:
+        counts[finding.category] = counts.get(finding.category, 0) + 1
+    return counts
+
+
+# ---------------------------------------------------------------------------
+# Zone matrix
+# ---------------------------------------------------------------------------
+
+ANY_ZONE = "any"
+NO_ZONE = "(nicht gesetzt)"
+
+
+def zone_matrix(resolved: ResolvedConfig) -> list[ZoneMatrix]:
+    """One matrix per VDOM: source zones x destination zones.
+
+    A rule with several source and destination zones counts in every
+    combination. Active rules are counted by action, disabled rules separately.
+    "any" is a zone of its own (first row and column); the implicit deny is
+    not part of the matrix.
+    """
+    matrices: list[ZoneMatrix] = []
+    for vdom in resolved.vdoms:
+        cells: dict[tuple[str, str], MatrixCell] = {}
+        sources: list[str] = []
+        destinations: list[str] = []
+        for policy in vdom.policies:
+            if policy.implicit:
+                continue
+            src_zones = policy.src_zones or [NO_ZONE]
+            dst_zones = policy.dst_zones or [NO_ZONE]
+            sources.extend(z for z in src_zones if z not in sources)
+            destinations.extend(z for z in dst_zones if z not in destinations)
+            for src in src_zones:
+                for dst in dst_zones:
+                    cell = cells.get((src, dst))
+                    if cell is None:
+                        cell = cells[(src, dst)] = MatrixCell(src=src, dst=dst)
+                    cell.positions.append(policy.position)
+                    if not policy.enabled:
+                        cell.disabled += 1
+                    elif policy.action == "accept":
+                        cell.accept += 1
+                    elif policy.action == "deny":
+                        cell.deny += 1
+                    else:
+                        cell.other += 1
+        known = [z.name for z in vdom.zones]
+        rows = _axis(sources, known)
+        cols = _axis(destinations, known)
+        order_r = {z: i for i, z in enumerate(rows)}
+        order_c = {z: i for i, z in enumerate(cols)}
+        ordered = sorted(cells.values(), key=lambda c: (order_r[c.src], order_c[c.dst]))
+        matrices.append(ZoneMatrix(vdom=vdom.name, rows=rows, cols=cols, cells=ordered))
+    return matrices
+
+
+def _axis(used: list[str], known: list[str]) -> list[str]:
+    """'any' first, then the zones in the order of the configuration, then unknown names."""
+    ordered = [ANY_ZONE]
+    ordered += [z for z in known if z in used and z != ANY_ZONE]
+    ordered += [z for z in used if z not in ordered]
+    return ordered
 
 
 # ---------------------------------------------------------------------------
@@ -170,15 +250,23 @@ def _unused_objects(tree: ConfigTree, resolved: ResolvedConfig) -> list[Finding]
                 if kind == "VIP" and central_nat.get(vdom.name):
                     continue  # with central NAT a VIP works without any reference
                 users = refs.get(edit.name, set()) - {(path, edit.name)}
-                if not users:
-                    findings.append(
-                        Finding(
-                            category=CAT_UNUSED,
-                            vdom=vdom.name,
-                            object_kind=kind,
-                            ref=edit.name,
-                            name=edit.name,
-                            detail="Kein Verweis im gesamten Backup gefunden.",
-                        )
+                if users:
+                    continue
+                # ASSUMPTION(X7): factory-default names, see defaults.FACTORY_OBJECTS.
+                factory = edit.name in FACTORY_OBJECTS.get(" ".join(path), frozenset())
+                findings.append(
+                    Finding(
+                        category=CAT_UNUSED_FACTORY if factory else CAT_UNUSED,
+                        vdom=vdom.name,
+                        object_kind=kind,
+                        ref=edit.name,
+                        name=edit.name,
+                        detail=(
+                            "Kein Verweis im gesamten Backup gefunden. Der Name gehört zu den "
+                            "werkseitig angelegten Objekten (siehe ANNAHMEN.md, X7)."
+                            if factory
+                            else "Kein Verweis im gesamten Backup gefunden."
+                        ),
                     )
+                )
     return findings

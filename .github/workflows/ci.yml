@@ -27,4 +27,6 @@ jobs:
       - name: Test
         run: python -m pytest -q
       - name: CLI smoke test
-        run: fortidoc parse tests/fixtures/two_vdoms.conf
+        run: |
+          fortidoc parse tests/fixtures/two_vdoms.conf
+          fortidoc --input tests/fixtures/res_findings.conf --output doku-ci

@@ -38,6 +38,12 @@ class ConfigObject(BaseModel):
 # ---------------------------------------------------------------------------
 
 ValueKind = Literal["network", "range", "fqdn", "vip", "unresolvable"]
+# Why a value is "nicht auflösbar"; the report search uses it to explain
+# "möglicherweise" hits.
+UnresolvedReason = Literal[
+    "invalid", "circular", "not-found", "wildcard", "geo", "dynamic", "interface", "mac", "unknown-type", "isdb",
+    "exclude",
+]
 
 
 class VipMapping(BaseModel):
@@ -70,6 +76,7 @@ class ResolvedValue(BaseModel):
     # True when the value is the FortiOS default because the backup has no
     # subnet/ip6 for the object (e.g. 'all' or special objects like FABRIC_DEVICE).
     from_default: bool = False
+    reason: UnresolvedReason | None = None  # only for kind "unresolvable"
 
 
 class AddressSide(BaseModel):
@@ -249,6 +256,25 @@ class SnatRule(BaseModel):
 # ---------------------------------------------------------------------------
 # Findings ("Auffälligkeiten")
 # ---------------------------------------------------------------------------
+
+
+class MatrixCell(BaseModel):
+    """Rules of one source zone -> destination zone combination."""
+
+    src: str
+    dst: str
+    accept: int = 0  # active rules
+    deny: int = 0
+    other: int = 0  # active rules with another action (e.g. ipsec)
+    disabled: int = 0  # disabled rules, any action
+    positions: list[int] = Field(default_factory=list)  # all rules of the cell, file order
+
+
+class ZoneMatrix(BaseModel):
+    vdom: str
+    rows: list[str]  # source zones, "any" first
+    cols: list[str]  # destination zones, "any" first
+    cells: list[MatrixCell] = Field(default_factory=list)
 
 
 class Finding(BaseModel):

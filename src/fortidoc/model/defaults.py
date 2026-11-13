@@ -119,3 +119,46 @@ PROFILE_KEYS: tuple[str, ...] = (
 def default_for(section: str, key: str) -> list[str] | None:
     values = DEFAULTS.get(section, {}).get(key)
     return list(values) if values is not None else None
+
+# ASSUMPTION(X7): names of objects that FortiOS creates on a factory-default
+# device (FortiOS 6.x/7.x, partly older). Compiled from experience, not from a
+# checked default configuration. Names are case-sensitive. An object with one
+# of these names that nothing references is reported as "Unbenutztes
+# Werksobjekt" instead of "Unbenutztes Objekt". A self-made object that happens
+# to carry such a name is treated the same way.
+FACTORY_OBJECTS: dict[str, frozenset[str]] = {
+    "firewall address": frozenset(
+        {
+            "all", "none", "FIREWALL_AUTH_PORTAL_ADDRESS", "FABRIC_DEVICE", "SSLVPN_TUNNEL_ADDR1",
+            "EMS_ALL_UNKNOWN_CLIENTS", "EMS_ALL_UNMANAGEABLE_CLIENTS", "FCTEMS_ALL_FORTICLOUD_SERVERS",
+            "login.microsoftonline.com", "login.microsoft.com", "login.windows.net", "gmail.com",
+            "wildcard.google.com", "wildcard.dropbox.com",
+            # Older releases (5.6/6.0): exemptions of the SSL inspection profiles.
+            "apple", "appstore", "auth.gfx.ms", "citrix", "dropbox.com", "eease", "fortinet",
+            "google-drive", "google-play", "google-play2", "google-play3", "Gotomeeting", "icloud",
+            "itunes", "android", "skype", "swscan.apple.com", "update.microsoft.com", "microsoft",
+            "adobe", "Adobe Login", "outlook", "verisign", "Windows update 2", "*.live.com",
+        }
+    ),
+    "firewall addrgrp": frozenset({"G Suite", "Microsoft Office 365"}),
+    "firewall address6": frozenset({"all", "none", "SSLVPN_TUNNEL_IPv6_ADDR1"}),
+    "firewall addrgrp6": frozenset(),
+    "firewall service custom": frozenset(
+        {
+            "ALL", "ALL_TCP", "ALL_UDP", "ALL_ICMP", "ALL_ICMP6", "GRE", "AH", "ESP", "AOL", "BGP",
+            "DHCP", "DNS", "FINGER", "FTP", "FTP_GET", "FTP_PUT", "GOPHER", "H323", "HTTP", "HTTPS",
+            "IKE", "IMAP", "IMAPS", "Internet-Locator-Service", "IRC", "L2TP", "LDAP", "NetMeeting",
+            "NFS", "NNTP", "NTP", "OSPF", "PC-Anywhere", "PING", "TIMESTAMP", "INFO_REQUEST",
+            "INFO_ADDRESS", "ONC-RPC", "DCE-RPC", "POP3", "POP3S", "PPTP", "QUAKE", "RAUDIO",
+            "REXEC", "RIP", "RLOGIN", "RSH", "SCCP", "SIP", "SIP-MSNmessenger", "SAMBA", "SMTP",
+            "SMTPS", "SNMP", "SSH", "SYSLOG", "TALK", "TELNET", "TFTP", "MGCP", "UUCP", "VDOLIVE",
+            "WAIS", "WINFRAME", "X-WINDOWS", "PING6", "MS-SQL", "MYSQL", "RDP", "VNC", "DHCP6",
+            "SQUID", "SOCKS", "WINS", "RADIUS", "RADIUS-OLD", "CVSPSERVER", "AFS3", "TRACEROUTE",
+            "RTSP", "MMS", "KERBEROS", "LDAP_UDP", "SMB", "NONE", "webproxy",
+        }
+    ),
+    "firewall service group": frozenset({"Email Access", "Web Access", "Windows AD", "Exchange Server"}),
+    "firewall vip": frozenset(),
+    "firewall vipgrp": frozenset(),
+    "firewall ippool": frozenset(),
+}

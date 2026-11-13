@@ -27,7 +27,7 @@ version = { attr = "fortidoc.__version__" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-fortidoc = ["templates/*.j2"]
+fortidoc = ["templates/*.j2", "templates/*.js", "templates/*.css"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

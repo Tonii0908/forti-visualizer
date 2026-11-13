@@ -16,6 +16,7 @@ from fortidoc.core.analyzer import analyze
 from fortidoc.core.resolver import resolve_config
 from fortidoc.errors import FortidocError
 from fortidoc.export.excel import WORKBOOK_NAME, write_workbook
+from fortidoc.export.html import REPORT_NAME, write_report
 from fortidoc.model.schema import AddressSide, ResolvedConfig, ResolvedPolicy
 from fortidoc.parser.conf_parser import ConfigNode, ConfigTree, EditNode, iter_nodes, parse_file
 
@@ -75,7 +76,10 @@ def main(
 
 
 def _generate(input_file: Path, output_dir: Path) -> None:
-    """Parse, resolve and analyse the backup, then write regelwerk.xlsx."""
+    """Parse, resolve and analyse the backup once, then write regelwerk.xlsx and report.html.
+
+    Both files are built from the same resolved model and the same findings.
+    """
     try:
         tree = parse_file(input_file)
     except FortidocError as exc:
@@ -85,15 +89,17 @@ def _generate(input_file: Path, output_dir: Path) -> None:
         typer.echo(f"Hinweis: {'Zeile ' + str(warning.line) + ': ' if warning.line else ''}{warning.message}", err=True)
     resolved = resolve_config(tree)
     findings = analyze(tree, resolved)
+    created = _now()
     try:
         output_dir.mkdir(parents=True, exist_ok=True)
-        workbook = write_workbook(resolved, findings, output_dir / WORKBOOK_NAME, _now())
+        workbook = write_workbook(resolved, findings, output_dir / WORKBOOK_NAME, created)
+        report = write_report(resolved, findings, output_dir / REPORT_NAME, created)
     except OSError as exc:
         typer.echo(f"Fehler: Ausgabe konnte nicht geschrieben werden: {exc.strerror or exc}", err=True)
         raise typer.Exit(1) from None
     typer.echo(f"Geschrieben: {workbook}")
+    typer.echo(f"Geschrieben: {report}")
     typer.echo(f"Auffälligkeiten: {len(findings)}")
-    typer.echo("Hinweis: report.html folgt in Stufe 4.", err=True)
 
 
 @app.command("parse")

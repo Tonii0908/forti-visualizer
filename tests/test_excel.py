@@ -154,15 +154,47 @@ def test_policy_row_content(findings_book):
     first = dict(zip(header, rows(ws)[0]))
     assert first["VDOM"] == "root"
     assert first["Position"] == 1
-    assert first["ID"] == "1"
+    assert first["ID"] == 1
     assert first["Action"] == "ACCEPT"
     assert first["Status"] == "aktiv"
     assert first["Quelle (Objekt)"] == "all"
     assert first["Quelle (aufgelöst)"] == "0.0.0.0/0"
     assert first["Dienst (aufgelöst)"] == "TCP/443"
     implicit = dict(zip(header, rows(ws)[-1]))
-    assert implicit["ID"] == "0"
+    assert implicit["ID"] == 0
     assert implicit["Action"] == "DENY"
+
+
+def test_numeric_policy_ids_are_numbers(findings_book):
+    _, wb = findings_book
+    ws = wb["Policies"]
+    column = POLICY_COLUMNS.index("ID") + 1
+    cells = [ws.cell(row=r, column=column) for r in range(2, ws.max_row + 1)]
+    assert cells and all(isinstance(c.value, int) for c in cells)
+    assert all(c.data_type == "n" for c in cells)
+
+
+def test_non_numeric_policy_id_stays_text():
+    from fortidoc.export.excel import policy_id_cell
+
+    assert policy_id_cell("17") == 17
+    assert policy_id_cell("007") == "007"  # a leading zero would get lost as a number
+    assert policy_id_cell("1a") == "1a"
+    assert policy_id_cell("") == ""
+
+
+def test_overview_counts_findings_per_check(findings_book):
+    from fortidoc.core.analyzer import CATEGORIES
+
+    _, wb = findings_book
+    overview = dict(rows(wb["Übersicht"]))
+    tree = parse_file(FIXTURES / "res_findings.conf")
+    findings = analyze(tree, resolve_config(tree))
+    assert overview["Auffälligkeiten gesamt"] == len(findings)
+    for category in CATEGORIES:
+        expected = sum(1 for f in findings if f.category == category)
+        assert overview[f"Auffälligkeiten: {category}"] == expected, category
+    assert overview["Auffälligkeiten: Deaktivierte Regel"] == 1
 
 
 def test_address_without_subnet_shows_note_in_policies(findings_book):

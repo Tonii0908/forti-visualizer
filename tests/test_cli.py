@@ -78,7 +78,8 @@ def test_main_command_writes_workbook(tmp_path, fixture_path):
     workbook = out / "regelwerk.xlsx"
     assert workbook.exists()
     assert str(workbook) in result.stdout
-    assert "report.html" in result.stderr  # follows in stage 4
+    assert str(out / "report.html") in result.stdout
+    assert (out / "report.html").exists()
     import openpyxl
 
     assert openpyxl.load_workbook(workbook).sheetnames[0] == "Übersicht"
