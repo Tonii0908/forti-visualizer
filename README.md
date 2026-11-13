@@ -30,10 +30,13 @@ und unbekannten Schlüssel werden nur gezählt („Nicht verarbeitet“).
 Ausgewertet werden `firewall policy`, `policy6`, `security-policy` (NGFW-Modus
 richtlinienbasiert, mit Anwendungen und Kategorien) sowie `local-in-policy` und
 `local-in-policy6`. Local-In-Regeln bilden eine eigene Tabelle; ihr Ziel ist die
-FortiGate selbst.
+FortiGate selbst. Im NGFW-Modus richtlinienbasiert (`ngfw-mode policy-based`) ist
+das Regelwerk die Liste der Security-Policies; die Einträge in `firewall policy`
+steuern dann SSL-Inspection und Authentifizierung und stehen in einer eigenen
+Tabelle (nicht in Matrix, Diagramm und Suche). Die Übersicht nennt den Modus.
 
-`regelwerk.xlsx` hat neun Reiter: Übersicht, Policies, Local-In, Adressen, Dienste,
-NAT, Interfaces, Auffälligkeiten und Nicht verarbeitet. Die Übersicht nennt SHA-256 der
+`regelwerk.xlsx` hat zehn Reiter: Übersicht, Policies, Local-In, SSL-Inspection,
+Adressen, Dienste, NAT, Interfaces, Auffälligkeiten und Nicht verarbeitet. Die Übersicht nennt SHA-256 der
 Eingabedatei, FortiOS-Version, Tool-Version und Erstellzeit. Gleiche Eingabe ergibt
 bis auf die Erstellzeit dieselbe Datei. Texte aus dem Backup werden immer als Text
 geschrieben, nie als Formel.
@@ -47,8 +50,10 @@ Objekte und unbenutzte Werksobjekte (werkseitig angelegte Objekte wie `AFS3`,
 derselben Tabelle alle ihre Zonen, Adressen und Dienste umfasst. fortidoc meldet
 nur, was es beweisen kann: Regeln mit FQDN, Geo, dynamischen Adressen, VIPs,
 Internet Service oder Negation werden nicht als überdeckt gemeldet, und eine
-frühere Regel zählt nur mit ihren exakten Werten. Der Befund nennt die frühere
-Regel und ob sie eine andere Action hat (Details: ANNAHMEN.md, U1–U5).
+frühere Regel zählt nur mit ihren exakten Werten. Eine frühere Regel mit
+einschränkenden Bedingungen (FSSO-Gruppen, Geräte, ZTNA-Tags, ToS u. a.) überdeckt
+nie. Der Befund nennt die frühere
+Regel und ob sie eine andere Action hat (Details: ANNAHMEN.md, U1–U6).
 
 ## report.html
 
@@ -57,8 +62,9 @@ Edge), ohne Server und ohne Internet. CSS, JavaScript und Daten sind eingebettet
 eine Content-Security-Policy verbietet jedes Nachladen. Report und Arbeitsmappe
 entstehen in einem Lauf aus demselben Modell und denselben Auffälligkeiten.
 
-Ansichten: Übersicht, Zonen-Matrix, Zonen-Diagramm, Regeln, Local-In, Adressen,
-Dienste, Interfaces und Zonen, NAT, Auffälligkeiten, Nicht verarbeitet. Tabellen
+Ansichten: Übersicht, Zonen-Matrix, Zonen-Diagramm, Regeln, Local-In,
+SSL-Inspection (nur im NGFW-Modus richtlinienbasiert), Adressen, Dienste,
+Interfaces und Zonen, NAT, Auffälligkeiten, Nicht verarbeitet. Tabellen
 zeigen Seiten zu 50 bis 500 Zeilen; Filter und Suche arbeiten auf den Daten, nicht
 auf dem DOM.
 
