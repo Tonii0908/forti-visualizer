@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="{{ csp }}">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="{{ tool }}">
+<title>Regelwerk {{ device.model or "FortiGate" }} – fortidoc</title>
+<style>{{ style }}</style>
+</head>
+<body>
+<section id="cover" class="print-only">
+  <div class="cover-inner">
+    <p class="cover-kicker">Firewall-Dokumentation</p>
+    <h1>Regelwerk {{ device.model or "FortiGate" }}</h1>
+    <table class="kv">
+      <tr><th>Gerät</th><td>{{ device.model or "unbekannt" }}</td></tr>
+      <tr><th>FortiOS-Version</th><td>{{ device.version or "unbekannt" }}{% if device.build %} (Build {{ device.build }}){% endif %}</td></tr>
+      <tr><th>VDOMs</th><td>{{ vdoms | join(", ") }}</td></tr>
+      <tr><th>Eingabedatei</th><td>{{ device.input_name or "" }}</td></tr>
+      <tr><th>SHA-256 der Eingabedatei</th><td class="mono">{{ device.input_sha256 or "" }}</td></tr>
+      <tr><th>Erstellzeit (UTC)</th><td>{{ created }}</td></tr>
+      <tr><th>Tool-Version</th><td>{{ tool }}</td></tr>
+    </table>
+    <p class="cover-note">Erzeugt aus dem Konfigurations-Backup. Passwörter, Schlüssel und Zertifikate sind entfernt. Das Dokument kann trotzdem vertrauliche Angaben zur Netzstruktur enthalten.</p>
+  </div>
+</section>
+
+<header class="topbar no-print">
+  <div class="brand">
+    <strong>fortidoc</strong>
+    <span>{{ device.model or "FortiGate" }} · FortiOS {{ device.version or "unbekannt" }}</span>
+  </div>
+  <div class="meta">
+    <span title="SHA-256 der Eingabedatei">SHA-256 <span class="mono">{{ (device.input_sha256 or "")[:16] }}…</span></span>
+    <span>Erstellt {{ created }} UTC</span>
+    <span>{{ tool }}</span>
+    <button type="button" id="print-button">Drucken / PDF</button>
+  </div>
+</header>
+
+<nav class="tabs no-print" aria-label="Ansichten">
+  <button type="button" data-view="overview">Übersicht</button>
+  <button type="button" data-view="matrix">Zonen-Matrix</button>
+  <button type="button" data-view="rules">Regeln</button>
+  <button type="button" data-view="addresses">Adressen</button>
+  <button type="button" data-view="services">Dienste</button>
+  <button type="button" data-view="interfaces">Interfaces und Zonen</button>
+  <button type="button" data-view="nat">NAT</button>
+  <button type="button" data-view="findings">Auffälligkeiten <span class="count">{{ total_findings }}</span></button>
+  <button type="button" data-view="coverage">Nicht verarbeitet</button>
+</nav>
+
+<main>
+  <section id="view-overview" class="view">
+    <h2>Übersicht</h2>
+    <div class="columns">
+      <table class="kv overview">
+        <thead><tr><th>Angabe</th><th>Wert</th></tr></thead>
+        <tbody>
+{% for label, value in overview %}
+          <tr><th>{{ label }}</th><td>{{ "" if value is none else value }}</td></tr>
+{% endfor %}
+        </tbody>
+      </table>
+      <div>
+        <h3>Auffälligkeiten je Prüfung</h3>
+        <table class="kv counts">
+          <thead><tr><th>Prüfung</th><th>Anzahl</th></tr></thead>
+          <tbody>
+{% for category, count in counts.items() %}
+            <tr><th>{{ category }}</th><td class="num">{{ count }}</td></tr>
+{% endfor %}
+            <tr class="total"><th>Gesamt</th><td class="num">{{ total_findings }}</td></tr>
+          </tbody>
+        </table>
+        <p class="hint">Excel-Arbeitsmappe und dieser Report entstehen aus demselben aufgelösten Modell und denselben Auffälligkeiten.</p>
+        <p class="hint">{{ search_notice }}</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-matrix" class="view" hidden>
+    <h2>Zonen-Matrix</h2>
+    <div class="toolbar">
+      <label>VDOM <select id="matrix-vdom"></select></label>
+      <span class="legend"><span class="n-accept">Accept</span> <span class="n-deny">Deny</span> <span class="n-other">Sonstige</span> <span class="n-disabled">deaktiviert</span></span>
+    </div>
+    <p class="hint">Zeilen sind Quellzonen, Spalten Zielzonen. Zellen zählen aktive Regeln je Action, deaktivierte Regeln stehen grau daneben. Eine Regel mit mehreren Zonen zählt in jeder Kombination. „any“ ist eine eigene Zeile und Spalte, das implizite Deny ist nicht enthalten. Klick auf eine Zelle listet ihre Regeln.</p>
+    <div id="matrix" class="scroll"></div>
+    <div id="matrix-rules"></div>
+  </section>
+
+  <section id="view-rules" class="view" hidden>
+    <h2>Regeln</h2>
+    <form id="rule-filters" class="toolbar" autocomplete="off">
+      <label>VDOM <select id="f-vdom"></select></label>
+      <label>Quellzone <select id="f-srczone"></select></label>
+      <label>Zielzone <select id="f-dstzone"></select></label>
+      <label>Action
+        <select id="f-action">
+          <option value="">alle</option>
+          <option value="accept">accept</option>
+          <option value="deny">deny</option>
+          <option value="other">sonstige</option>
+        </select>
+      </label>
+      <label>Status
+        <select id="f-status">
+          <option value="">alle</option>
+          <option value="enabled">aktiv</option>
+          <option value="disabled">deaktiviert</option>
+        </select>
+      </label>
+      <label>Text <input type="search" id="f-text" placeholder="Name, Objekt, Kommentar …"></label>
+    </form>
+    <form id="rule-search" class="toolbar search" autocomplete="off">
+      <label>IP oder Netz <input type="search" id="s-ip" placeholder="10.10.20.15 oder 10.10.20.0/24" spellcheck="false"></label>
+      <label>als
+        <select id="s-side">
+          <option value="src">Quelle</option>
+          <option value="dst">Ziel</option>
+          <option value="both">Quelle oder Ziel</option>
+        </select>
+      </label>
+      <label>Port <input type="search" id="s-port" placeholder="443" inputmode="numeric" size="6"></label>
+      <label>Protokoll
+        <select id="s-proto">
+          <option value="TCP">TCP</option>
+          <option value="UDP">UDP</option>
+          <option value="SCTP">SCTP</option>
+          <option value="any">beliebig</option>
+        </select>
+      </label>
+      <button type="button" id="s-reset">Zurücksetzen</button>
+      <span id="s-error" class="error" role="alert"></span>
+    </form>
+    <p class="hint notice">{{ search_notice }} Sichere Treffer: Die IP liegt in einem aufgelösten Netz oder Bereich, der Port in einem aufgelösten Dienst. Regeln mit FQDN, Geo, Internet Service, dynamischen oder nicht auflösbaren Adressen oder Negation auf der gesuchten Seite stehen getrennt unter „möglicherweise“.</p>
+    <div id="cell-filter" class="chip-row"></div>
+    <h3 id="rules-main-title">Regeln</h3>
+    <div id="rules-main"></div>
+    <div id="rules-possible-block" hidden>
+      <h3 id="rules-possible-title">Möglicherweise</h3>
+      <div id="rules-possible"></div>
+    </div>
+  </section>
+
+  <section id="view-addresses" class="view" hidden>
+    <h2>Adressen</h2>
+    <div class="generic" data-table="addresses"></div>
+  </section>
+
+  <section id="view-services" class="view" hidden>
+    <h2>Dienste</h2>
+    <div class="generic" data-table="services"></div>
+  </section>
+
+  <section id="view-interfaces" class="view" hidden>
+    <h2>Interfaces und Zonen</h2>
+    <h3>Interfaces</h3>
+    <div class="generic" data-table="interfaces"></div>
+    <h3>Zonen</h3>
+    <div class="generic" data-table="zones"></div>
+  </section>
+
+  <section id="view-nat" class="view" hidden>
+    <h2>NAT</h2>
+    <p class="hint">VIPs (DNAT), IP-Pools und Central-SNAT.</p>
+    <div class="generic" data-table="nat"></div>
+  </section>
+
+  <section id="view-findings" class="view" hidden>
+    <h2>Auffälligkeiten</h2>
+    <div class="generic" data-table="findings" data-filter-column="1"></div>
+  </section>
+
+  <section id="view-coverage" class="view" hidden>
+    <h2>Nicht verarbeitet</h2>
+    <p class="hint">Abschnitte, die fortidoc nicht auswertet, und unbekannte Schlüssel in ausgewerteten Abschnitten. Es werden nur Namen und Anzahlen gezeigt, keine Werte.</p>
+    <div class="generic" data-table="coverage"></div>
+  </section>
+</main>
+
+<div id="print-area" class="print-only"></div>
+
+<script type="application/json" id="report-data">{{ data_json }}</script>
+<script>{{ script }}</script>
+</body>
+</html>

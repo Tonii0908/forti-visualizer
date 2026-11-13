@@ -25,16 +25,32 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from fortidoc import __version__
-from fortidoc.core.analyzer import count_by_category
-from fortidoc.model.schema import (
-    AddressSide,
-    Finding,
-    ResolvedConfig,
-    ResolvedPolicy,
-    ResolvedValue,
-    ServiceEntry,
-    ServiceSide,
+from fortidoc.export.common import (
+    ADDRESS_COLUMNS,
+    COVERAGE_COLUMNS,
+    FINDING_COLUMNS,
+    INTERFACE_COLUMNS,
+    NAT_COLUMNS,
+    OVERVIEW_COLUMNS,
+    SERVICE_COLUMNS,
+    address_rows,
+    coverage_rows,
+    finding_rows,
+    interface_rows,
+    nat_rows,
+    nat_text,
+    overview_rows,
+    policy_notes,
+    profile_lines,
+    service_objects,
+    service_rows,
+    service_values,
+    side_objects,
+    side_values,
+    status_text,
+    users_lines,
 )
+from fortidoc.model.schema import Finding, ResolvedConfig, ResolvedPolicy
 
 WORKBOOK_NAME = "regelwerk.xlsx"
 CELL_LIMIT = 32767
@@ -75,38 +91,6 @@ POLICY_COLUMNS = [
     "Kommentar",
     "Hinweise",
 ]
-OVERVIEW_COLUMNS = ["Angabe", "Wert"]
-ADDRESS_COLUMNS = ["VDOM", "Kategorie", "Name", "Typ", "Mitglieder", "Ausgenommen", "Aufgelöst", "Kommentar", "Hinweise"]
-SERVICE_COLUMNS = ["VDOM", "Kategorie", "Name", "Protokoll", "Mitglieder", "Aufgelöst", "Kommentar", "Hinweise"]
-NAT_COLUMNS = [
-    "VDOM",
-    "Art",
-    "Position",
-    "Name/ID",
-    "Status",
-    "Interfaces",
-    "Ursprung",
-    "Übersetzt auf",
-    "Details",
-    "Kommentar",
-    "Hinweise",
-]
-INTERFACE_COLUMNS = [
-    "Interface",
-    "Typ",
-    "IP",
-    "VLAN-ID",
-    "Parent",
-    "Mitglieder",
-    "Zone",
-    "VDOM",
-    "Alias",
-    "Beschreibung",
-    "Hinweise",
-]
-FINDING_COLUMNS = ["VDOM", "Prüfung", "Objektart", "Position", "ID/Name", "Name", "Detail"]
-COVERAGE_COLUMNS = ["Art", "Bereich", "Abschnitt", "Schlüssel", "Anzahl", "Zeile"]
-
 _HEADER_FONT = Font(bold=True, color="FFFFFF")
 _HEADER_FILL = PatternFill("solid", fgColor="44546A")
 _ACCEPT_FILL = PatternFill("solid", fgColor="C6EFCE")
@@ -123,21 +107,6 @@ _WIDTHS = {
     "Kommentar": 30, "Hinweise": 45, "Angabe": 34, "Wert": 70, "Detail": 70, "Aufgelöst": 40,
     "Mitglieder": 28, "Ausgenommen": 22, "Ursprung": 30, "Übersetzt auf": 30, "Details": 34,
     "Interfaces": 22, "Abschnitt": 32, "Schlüssel": 26, "Prüfung": 22,
-}
-
-_CATEGORY_LABELS = {
-    "address": "Adresse",
-    "addrgrp": "Adressgruppe",
-    "address6": "IPv6-Adresse",
-    "addrgrp6": "IPv6-Adressgruppe",
-    "vip": "VIP",
-    "vipgrp": "VIP-Gruppe",
-}
-_NAT_LABELS = {
-    "none": "kein NAT",
-    "interface": "Adresse des Ausgangs-Interfaces",
-    "pool": "IP-Pool",
-    "central": "Central NAT (siehe Reiter NAT)",
 }
 
 # ---------------------------------------------------------------------------
@@ -169,41 +138,6 @@ def fit_lines(lines: Sequence[str], sheet: str | None = None) -> str:
         out.append(line)
         size += len(line) + 1
     return "\n".join(out)
-
-
-def _value_line(value: ResolvedValue) -> str:
-    if value.kind == "unresolvable":
-        return f"{value.value} [nicht auflösbar: {value.note}]"
-    if value.note:
-        return f"{value.value} [{value.note}]"
-    return value.value
-
-
-def _entry_line(entry: ServiceEntry) -> str:
-    if entry.kind == "unresolvable":
-        return f"{entry.value} [nicht auflösbar: {entry.note}]"
-    return entry.value
-
-
-def _side_objects(side: AddressSide) -> list[str]:
-    lines = ["NICHT (alles außer):"] if side.negate else []
-    lines += side.objects
-    lines += [f"{name} (IPv6)" for name in side.objects6]
-    lines += [f"Internet Service: {name}" for name in side.internet_services]
-    return lines
-
-
-def _side_values(side: AddressSide) -> list[str]:
-    lines = ["alles außer:"] if side.negate else []
-    return lines + [_value_line(v) for v in side.values]
-
-
-def _service_objects(service: ServiceSide) -> list[str]:
-    return (["NICHT (alles außer):"] if service.negate else []) + service.objects
-
-
-def _service_values(service: ServiceSide) -> list[str]:
-    return (["alles außer:"] if service.negate else []) + [_entry_line(e) for e in service.entries]
 
 
 # ---------------------------------------------------------------------------
@@ -278,45 +212,28 @@ def policy_id_cell(policy_id: str) -> int | str:
 
 
 def _policy_row(p: ResolvedPolicy) -> list[object]:
-    notes = list(p.notes)
-    if p.section == "firewall policy6":
-        notes.append("IPv6-Regel (firewall policy6).")
-    elif p.ip_version != "4" and not p.implicit:
-        notes.append("IPv6" if p.ip_version == "6" else "IPv4 und IPv6")
-    if "action" in p.defaults_applied and not p.implicit:
-        notes.append(f"action nicht gesetzt, FortiOS-Default {p.action}.")
-    if p.unknown_keys:
-        notes.append("Nicht ausgewertete Schlüssel: " + ", ".join(p.unknown_keys))
-    nat = _NAT_LABELS[p.nat.mode] if not p.implicit else ""
-    if p.nat.pools:
-        nat += ": " + ", ".join(pool.value for pool in p.nat.pools)
-    users = []
-    if p.users:
-        users.append("Benutzer: " + ", ".join(p.users))
-    if p.groups:
-        users.append("Gruppen: " + ", ".join(p.groups))
     return [
         p.vdom,
         p.position,
         policy_id_cell(p.policy_id),
         p.name,
-        "aktiv" if p.enabled else "deaktiviert",
+        status_text(p),
         p.action.upper(),
         "\n".join(p.src_zones),
         "\n".join(p.dst_zones),
-        fit_lines(_side_objects(p.source)),
-        fit_lines(_side_values(p.source), "Adressen"),
-        fit_lines(_side_objects(p.destination)),
-        fit_lines(_side_values(p.destination), "Adressen"),
-        fit_lines(_service_objects(p.service)),
-        fit_lines(_service_values(p.service), "Dienste"),
-        nat,
-        "\n".join(users),
+        fit_lines(side_objects(p.source)),
+        fit_lines(side_values(p.source), "Adressen"),
+        fit_lines(side_objects(p.destination)),
+        fit_lines(side_values(p.destination), "Adressen"),
+        fit_lines(service_objects(p.service)),
+        fit_lines(service_values(p.service), "Dienste"),
+        nat_text(p),
+        "\n".join(users_lines(p)),
         p.schedule,
         p.logtraffic,
-        "\n".join(f"{k}: {v}" for k, v in p.profiles.items()),
+        "\n".join(profile_lines(p)),
         p.comments,
-        fit_lines(notes),
+        fit_lines(policy_notes(p)),
     ]
 
 
@@ -336,166 +253,7 @@ def _policies_sheet(ws, resolved: ResolvedConfig) -> None:
 
 
 def _overview_sheet(ws, resolved: ResolvedConfig, findings: list[Finding], created_at: datetime) -> None:
-    d = resolved.device
-    rows: list[tuple[str, object]] = [
-        ("Gerät", d.model or "unbekannt"),
-        ("FortiOS-Version", d.version or "unbekannt"),
-        ("Build", d.build),
-        ("Firmware-Typ", d.firmware_type),
-        ("VDOM-Modus", "Multi-VDOM" if d.vdom_mode == "multi-vdom" else "ohne VDOMs (als VDOM root geführt)"),
-        ("VDOMs", ", ".join(v.name for v in resolved.vdoms)),
-        ("Eingabedatei", d.input_name),
-        ("SHA-256 der Eingabedatei", d.input_sha256),
-        ("Dateigröße (Bytes)", d.input_size_bytes),
-        ("Erstellzeit (UTC)", created_at.isoformat()),
-        ("Tool-Version", f"fortidoc {__version__}"),
-        ("Interfaces und SD-WAN-Zonen", len(resolved.interfaces)),
-    ]
-    for vdom in resolved.vdoms:
-        rules = [p for p in vdom.policies if not p.implicit]
-        rows += [
-            (f"VDOM {vdom.name}: Regeln (ohne implizites Deny)", len(rules)),
-            (f"VDOM {vdom.name}: davon aktiv", sum(1 for p in rules if p.enabled)),
-            (f"VDOM {vdom.name}: davon deaktiviert", sum(1 for p in rules if not p.enabled)),
-            (f"VDOM {vdom.name}: Adressobjekte", len(vdom.addresses)),
-            (f"VDOM {vdom.name}: Dienstobjekte", len(vdom.services)),
-            (f"VDOM {vdom.name}: VIPs", len(vdom.vips)),
-            (f"VDOM {vdom.name}: IP-Pools", len(vdom.ippools)),
-            (f"VDOM {vdom.name}: Central-SNAT-Regeln", len(vdom.snat)),
-            (f"VDOM {vdom.name}: Central NAT", "ja" if vdom.central_nat else "nein"),
-        ]
-    rows.append(("Auffälligkeiten gesamt", len(findings)))
-    rows += [(f"Auffälligkeiten: {category}", count) for category, count in count_by_category(findings).items()]
-    rows += [
-        ("Nicht verarbeitete Abschnitte", len(resolved.coverage.unprocessed_sections)),
-        ("Nicht ausgewertete Schlüssel", len(resolved.coverage.unknown_keys)),
-    ]
-    for vdom in resolved.vdoms:
-        rows += [(f"Hinweis VDOM {vdom.name}", note) for note in vdom.notes]
-    rows += [("Hinweis beim Einlesen", note) for note in resolved.notes]
-    _write_table(ws, OVERVIEW_COLUMNS, rows)
-
-
-def _addresses_sheet(ws, resolved: ResolvedConfig) -> None:
-    rows = []
-    for vdom in resolved.vdoms:
-        for a in vdom.addresses:
-            notes = []
-            if a.unknown_keys:
-                notes.append("Nicht ausgewertete Schlüssel: " + ", ".join(a.unknown_keys))
-            rows.append(
-                [
-                    a.vdom,
-                    _CATEGORY_LABELS[a.category],
-                    a.name,
-                    a.type,
-                    fit_lines(a.members),
-                    fit_lines(a.exclude_members),
-                    fit_lines([_value_line(v) for v in a.values]),
-                    a.comment,
-                    "\n".join(notes),
-                ]
-            )
-    _write_table(ws, ADDRESS_COLUMNS, rows)
-
-
-def _services_sheet(ws, resolved: ResolvedConfig) -> None:
-    rows = []
-    for vdom in resolved.vdoms:
-        for s in vdom.services:
-            notes = []
-            if s.unknown_keys:
-                notes.append("Nicht ausgewertete Schlüssel: " + ", ".join(s.unknown_keys))
-            rows.append(
-                [
-                    s.vdom,
-                    "Dienst" if s.category == "custom" else "Dienstgruppe",
-                    s.name,
-                    s.protocol,
-                    fit_lines(s.members),
-                    fit_lines([_entry_line(e) for e in s.entries]),
-                    s.comment,
-                    "\n".join(notes),
-                ]
-            )
-    _write_table(ws, SERVICE_COLUMNS, rows)
-
-
-def _nat_sheet(ws, resolved: ResolvedConfig) -> None:
-    rows = []
-    for vdom in resolved.vdoms:
-        for vip in vdom.vips:
-            origin = vip.ext_ip or "?"
-            if vip.portforward:
-                origin += f":{vip.ext_port or '?'}/{(vip.protocol or '?').upper()}"
-            target = ", ".join(
-                f"{m}:{vip.mapped_port}" if vip.portforward and vip.mapped_port else m for m in vip.mapped_ips
-            )
-            details = [f"Typ {vip.type}"]
-            if vip.portforward:
-                details.append("Portweiterleitung")
-            if vdom.central_nat:
-                details.append("Central NAT: wirkt ohne Verweis in der Policy")
-            rows.append(
-                [vdom.name, "VIP (DNAT)", None, vip.name, None, vip.ext_intf, origin, target,
-                 "\n".join(details), vip.comment, "\n".join(vip.notes)]
-            )
-        for pool in vdom.ippools:
-            origin = (
-                f"{pool.source_start_ip}-{pool.source_end_ip}" if pool.source_start_ip or pool.source_end_ip else None
-            )
-            rows.append(
-                [vdom.name, "IP-Pool", None, pool.name, None, None, origin,
-                 f"{pool.start_ip or '?'}-{pool.end_ip or '?'}", f"Typ {pool.type}", pool.comment,
-                 "\n".join(pool.notes)]
-            )
-        for rule in vdom.snat:
-            src = ", ".join(r.name for r in rule.src_interfaces) or "-"
-            dst = ", ".join(r.name for r in rule.dst_interfaces) or "-"
-            if not rule.nat:
-                target = "kein NAT"
-            elif rule.pools:
-                target = "\n".join(pool.value for pool in rule.pools)
-            else:
-                target = "Adresse des Ausgangs-Interfaces"
-            details = ["Ziel: " + (", ".join(_value_line(v) for v in rule.dst_addr.values) or "-")]
-            if rule.protocol:
-                details.append(f"Protokoll {rule.protocol}")
-            if rule.orig_port:
-                details.append(f"Ursprungsport {rule.orig_port}")
-            rows.append(
-                [vdom.name, "Central-SNAT", rule.position, rule.rule_id,
-                 "aktiv" if rule.enabled else "deaktiviert", f"{src} → {dst}",
-                 fit_lines(rule.orig_addr.objects + [_value_line(v) for v in rule.orig_addr.values], "Adressen"),
-                 target, "\n".join(details), rule.comments, "\n".join(rule.notes)]
-            )
-    _write_table(ws, NAT_COLUMNS, rows)
-
-
-def _interfaces_sheet(ws, resolved: ResolvedConfig) -> None:
-    rows = [
-        [i.name, i.type_label, i.ip, i.vlan_id, i.parent, "\n".join(i.members),
-         i.zone if i.zone != i.name else None, i.vdom,
-         i.alias, i.description, "\n".join(i.notes)]
-        for i in resolved.interfaces
-    ]
-    _write_table(ws, INTERFACE_COLUMNS, rows)
-
-
-def _findings_sheet(ws, findings: list[Finding]) -> None:
-    rows = [[f.vdom, f.category, f.object_kind, f.position, f.ref, f.name, f.detail] for f in findings]
-    _write_table(ws, FINDING_COLUMNS, rows)
-
-
-def _coverage_sheet(ws, resolved: ResolvedConfig) -> None:
-    coverage = resolved.coverage
-    rows: list[list[object]] = [
-        ["Abschnitt", s.scope, s.path, None, s.entries, s.line] for s in coverage.unprocessed_sections
-    ]
-    rows += [
-        ["Schlüssel", ", ".join(k.scopes), k.section, k.key, k.count, None] for k in coverage.unknown_keys
-    ]
-    _write_table(ws, COVERAGE_COLUMNS, rows)
+    _write_table(ws, OVERVIEW_COLUMNS, overview_rows(resolved, findings, created_at))
 
 
 # ---------------------------------------------------------------------------
@@ -509,12 +267,12 @@ def build_workbook(resolved: ResolvedConfig, findings: list[Finding], created_at
     sheets = {name: wb.create_sheet(title=name) for name in SHEETS}
     _overview_sheet(sheets["Übersicht"], resolved, findings, created_at)
     _policies_sheet(sheets["Policies"], resolved)
-    _addresses_sheet(sheets["Adressen"], resolved)
-    _services_sheet(sheets["Dienste"], resolved)
-    _nat_sheet(sheets["NAT"], resolved)
-    _interfaces_sheet(sheets["Interfaces"], resolved)
-    _findings_sheet(sheets["Auffälligkeiten"], findings)
-    _coverage_sheet(sheets["Nicht verarbeitet"], resolved)
+    _write_table(sheets["Adressen"], ADDRESS_COLUMNS, address_rows(resolved, fit_lines))
+    _write_table(sheets["Dienste"], SERVICE_COLUMNS, service_rows(resolved, fit_lines))
+    _write_table(sheets["NAT"], NAT_COLUMNS, nat_rows(resolved, fit_lines))
+    _write_table(sheets["Interfaces"], INTERFACE_COLUMNS, interface_rows(resolved))
+    _write_table(sheets["Auffälligkeiten"], FINDING_COLUMNS, finding_rows(findings))
+    _write_table(sheets["Nicht verarbeitet"], COVERAGE_COLUMNS, coverage_rows(resolved))
     wb.properties.creator = f"fortidoc {__version__}"
     wb.properties.title = "Regelwerk"
     return wb

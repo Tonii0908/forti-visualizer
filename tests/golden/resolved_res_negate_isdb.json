@@ -149,7 +149,8 @@
                 ],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               }
             ]
           },
@@ -171,7 +172,8 @@
                 ],
                 "note": "Internet Service: Die zugehörigen Adressen und Dienste stehen nur in der Datenbank auf dem Gerät.",
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": "isdb"
               },
               {
                 "kind": "unresolvable",
@@ -182,7 +184,8 @@
                 ],
                 "note": "Internet Service: Die zugehörigen Adressen und Dienste stehen nur in der Datenbank auf dem Gerät.",
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": "isdb"
               }
             ]
           },
@@ -268,7 +271,8 @@
                 ],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               }
             ]
           },
@@ -289,7 +293,8 @@
                 ],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               }
             ]
           },
@@ -390,7 +395,8 @@
                 ],
                 "note": "Internet Service: Die zugehörigen Adressen und Dienste stehen nur in der Datenbank auf dem Gerät.",
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": "isdb"
               }
             ]
           },
@@ -411,7 +417,8 @@
                 ],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               }
             ]
           },
@@ -509,7 +516,8 @@
                 "origin": [],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               }
             ]
           },
@@ -526,7 +534,8 @@
                 "origin": [],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               }
             ]
           },
@@ -586,7 +595,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -609,7 +619,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -632,7 +643,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -655,7 +667,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,

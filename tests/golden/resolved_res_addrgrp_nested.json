@@ -126,7 +126,8 @@
                 ],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               },
               {
                 "kind": "range",
@@ -140,7 +141,8 @@
                 ],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               },
               {
                 "kind": "network",
@@ -153,7 +155,8 @@
                 ],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               },
               {
                 "kind": "network",
@@ -165,7 +168,8 @@
                 ],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               }
             ]
           },
@@ -187,7 +191,8 @@
                 ],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               },
               {
                 "kind": "network",
@@ -200,7 +205,8 @@
                 ],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               },
               {
                 "kind": "unresolvable",
@@ -213,7 +219,8 @@
                 ],
                 "note": "Zirkelbezug: grp-loop-a > grp-loop-b > grp-loop-a",
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": "circular"
               }
             ]
           },
@@ -316,7 +323,8 @@
                 ],
                 "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude'.",
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               },
               {
                 "kind": "range",
@@ -327,7 +335,8 @@
                 ],
                 "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude'.",
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               },
               {
                 "kind": "range",
@@ -338,7 +347,8 @@
                 ],
                 "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude'.",
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               }
             ]
           },
@@ -360,7 +370,8 @@
                 ],
                 "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude-fqdn'.",
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               },
               {
                 "kind": "range",
@@ -371,7 +382,8 @@
                 ],
                 "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude-fqdn'.",
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               },
               {
                 "kind": "fqdn",
@@ -383,7 +395,8 @@
                 ],
                 "note": "Der Ausschluss (exclude-member) ist auf FQDN- und nicht auflösbare Werte nicht anwendbar.",
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               },
               {
                 "kind": "network",
@@ -395,7 +408,8 @@
                 ],
                 "note": "In Gruppe 'grp-exclude-disabled' ist exclude-member gesetzt, aber 'exclude' ist nicht aktiviert; der Ausschluss wird nicht angewendet.",
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               }
             ]
           },
@@ -499,7 +513,8 @@
                 ],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               },
               {
                 "kind": "unresolvable",
@@ -511,7 +526,8 @@
                 ],
                 "note": "Objekt 'does-not-exist' nicht gefunden (in den ausgewerteten Abschnitten).",
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": "not-found"
               }
             ]
           },
@@ -532,7 +548,8 @@
                 ],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               }
             ]
           },
@@ -631,7 +648,8 @@
                 "origin": [],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               }
             ]
           },
@@ -648,7 +666,8 @@
                 "origin": [],
                 "note": null,
                 "vip": null,
-                "from_default": false
+                "from_default": false,
+                "reason": null
               }
             ]
           },
@@ -708,7 +727,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -731,7 +751,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -754,7 +775,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -777,7 +799,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -800,7 +823,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -823,7 +847,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -846,7 +871,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -873,7 +899,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "range",
@@ -885,7 +912,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -913,7 +941,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "range",
@@ -926,7 +955,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "network",
@@ -938,7 +968,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -967,7 +998,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "range",
@@ -981,7 +1013,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "network",
@@ -994,7 +1027,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "network",
@@ -1006,7 +1040,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -1033,7 +1068,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "network",
@@ -1046,7 +1082,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "unresolvable",
@@ -1059,7 +1096,8 @@
               ],
               "note": "Zirkelbezug: grp-loop-a > grp-loop-b > grp-loop-a",
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": "circular"
             }
           ],
           "comment": null,
@@ -1086,7 +1124,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "network",
@@ -1099,7 +1138,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "unresolvable",
@@ -1112,7 +1152,8 @@
               ],
               "note": "Zirkelbezug: grp-loop-b > grp-loop-a > grp-loop-b",
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": "circular"
             }
           ],
           "comment": null,
@@ -1140,7 +1181,8 @@
               ],
               "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude'.",
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "range",
@@ -1151,7 +1193,8 @@
               ],
               "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude'.",
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "range",
@@ -1162,7 +1205,8 @@
               ],
               "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude'.",
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -1190,7 +1234,8 @@
               ],
               "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude-fqdn'.",
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "range",
@@ -1201,7 +1246,8 @@
               ],
               "note": "Ergebnis nach Ausschluss (exclude-member) in Gruppe 'grp-exclude-fqdn'.",
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "fqdn",
@@ -1213,7 +1259,8 @@
               ],
               "note": "Der Ausschluss (exclude-member) ist auf FQDN- und nicht auflösbare Werte nicht anwendbar.",
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -1241,7 +1288,8 @@
               ],
               "note": "In Gruppe 'grp-exclude-disabled' ist exclude-member gesetzt, aber 'exclude' ist nicht aktiviert; der Ausschluss wird nicht angewendet.",
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             }
           ],
           "comment": null,
@@ -1268,7 +1316,8 @@
               ],
               "note": null,
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": null
             },
             {
               "kind": "unresolvable",
@@ -1280,7 +1329,8 @@
               ],
               "note": "Objekt 'does-not-exist' nicht gefunden (in den ausgewerteten Abschnitten).",
               "vip": null,
-              "from_default": false
+              "from_default": false,
+              "reason": "not-found"
             }
           ],
           "comment": null,

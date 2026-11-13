@@ -15,6 +15,7 @@ from __future__ import annotations
 import ipaddress
 import re
 from collections.abc import Iterable
+from functools import lru_cache
 
 from fortidoc.model.defaults import (
     IMPLICIT_DENY_ID,
@@ -25,6 +26,7 @@ from fortidoc.model.defaults import (
 )
 from fortidoc.model.loader import LoadedConfig, LoadedVdom, load
 from fortidoc.model.schema import (
+    UnresolvedReason,
     AddressSide,
     ConfigObject,
     DeviceInfo,
@@ -88,23 +90,37 @@ def _mark_default(value: ResolvedValue, note: str) -> None:
     )
 
 
-def _unresolvable(value: str, origin: list[str], note: str, ip_version: int | None = None) -> ResolvedValue:
-    return ResolvedValue(kind="unresolvable", value=value, origin=list(origin), note=note, ip_version=ip_version)
+def _unresolvable(
+    value: str, origin: list[str], note: str, ip_version: int | None = None, reason: UnresolvedReason = "invalid"
+) -> ResolvedValue:
+    return ResolvedValue(
+        kind="unresolvable", value=value, origin=list(origin), note=note, ip_version=ip_version, reason=reason
+    )
 
 
-def _network_value(values: list[str], origin: list[str]) -> ResolvedValue:
-    """'10.0.0.0 255.255.255.0', '10.0.0.0/24' or '2001:db8::/32' -> network value."""
-    text = values[0] if len(values) == 1 else f"{values[0]}/{values[1]}"
+@lru_cache(maxsize=65536)
+def _parse_network(text: str) -> tuple[str, int, str | None] | None:
+    """Parsed network text, version and host-bit note; None if invalid. Cached: large backups repeat values."""
     try:
         iface = ipaddress.ip_interface(text)
     except ValueError:
-        return _unresolvable(" ".join(values), origin, "Ungültige Netzangabe.")
+        return None
     network = iface.network
     note = None
     if iface.ip != network.network_address and network.prefixlen != network.max_prefixlen:
         # ASSUMPTION(A1): host bits are ignored, the object stands for the whole network.
         note = f"Hostbits gesetzt ({iface.with_prefixlen}); als Netz {network} ausgewertet."
-    return ResolvedValue(kind="network", value=str(network), ip_version=network.version, origin=list(origin), note=note)
+    return str(network), network.version, note
+
+
+def _network_value(values: list[str], origin: list[str]) -> ResolvedValue:
+    """'10.0.0.0 255.255.255.0', '10.0.0.0/24' or '2001:db8::/32' -> network value."""
+    text = values[0] if len(values) == 1 else f"{values[0]}/{values[1]}"
+    parsed = _parse_network(text)
+    if parsed is None:
+        return _unresolvable(" ".join(values), origin, "Ungültige Netzangabe.")
+    network, version, note = parsed
+    return ResolvedValue(kind="network", value=network, ip_version=version, origin=list(origin), note=note)
 
 
 def _range_value(start: str | None, end: str | None, origin: list[str], name: str) -> ResolvedValue:
@@ -119,13 +135,22 @@ def _range_value(start: str | None, end: str | None, origin: list[str], name: st
 
 def _interval(value: ResolvedValue) -> tuple[int, int, int] | None:
     """(version, low, high) of a network or range value."""
-    if value.kind == "network":
-        net = ipaddress.ip_network(value.value)
-        return net.version, int(net.network_address), int(net.broadcast_address)
-    if value.kind == "range":
-        lo, hi = (ipaddress.ip_address(p) for p in value.value.split("-", 1))
-        return lo.version, int(lo), int(hi)
+    if value.kind in ("network", "range"):
+        return value_interval(value.value)
     return None
+
+
+@lru_cache(maxsize=65536)
+def value_interval(text: str) -> tuple[int, int, int] | None:
+    """(version, low, high) of '10.0.0.0/24' or '10.0.0.1-10.0.0.9'; None if it is neither."""
+    try:
+        if "/" in text:
+            net = ipaddress.ip_network(text)
+            return net.version, int(net.network_address), int(net.broadcast_address)
+        lo, hi = (ipaddress.ip_address(p) for p in text.split("-", 1))
+    except ValueError:
+        return None
+    return lo.version, int(lo), int(hi)
 
 
 def _merge(intervals: Iterable[tuple[int, int]]) -> list[tuple[int, int]]:
@@ -388,7 +413,7 @@ class Resolver:
     def _addr_values(self, ctx: _VdomContext, name: str, family: int, chain: list[str]) -> list[ResolvedValue]:
         path = chain + [name]
         if name in chain:
-            return [_unresolvable(name, path, "Zirkelbezug: " + " > ".join(path), family)]
+            return [_unresolvable(name, path, "Zirkelbezug: " + " > ".join(path), family, "circular")]
         if family == 4:
             if name in ctx.address:
                 return self._address4(ctx.address[name], path)
@@ -405,7 +430,7 @@ class Resolver:
                 return self._address6(ctx.address6[name], path)
             if name in ctx.addrgrp6:
                 return self._group(ctx, ctx.addrgrp6[name], 6, path)
-        return [_unresolvable(name, path, _NOT_FOUND.format(name=name), family)]
+        return [_unresolvable(name, path, _NOT_FOUND.format(name=name), family, "not-found")]
 
     def _address4(self, obj: ConfigObject, origin: list[str]) -> list[ResolvedValue]:
         used: list[str] = []
@@ -446,6 +471,7 @@ class Resolver:
                     origin,
                     "Wildcard-Maske ist nicht zusammenhängend und lässt sich nicht als Netz oder Bereich darstellen.",
                     4,
+                    "wildcard",
                 )
             ]
         if kind == "geography":
@@ -456,6 +482,7 @@ class Resolver:
                     origin,
                     f"Geo-Adresse (Land {country}): Die Zuordnung zu IP-Adressen liegt nur in der Datenbank auf dem Gerät.",
                     4,
+                    "geo",
                 )
             ]
         if kind == "dynamic":
@@ -468,6 +495,7 @@ class Resolver:
                     origin,
                     f"Dynamische Adresse ({details or 'ohne Angaben'}) wird erst auf dem Gerät aufgelöst.",
                     4,
+                    "dynamic",
                 )
             ]
         if kind == "interface-subnet":
@@ -484,7 +512,7 @@ class Resolver:
                         note=f"Netz des Interfaces {intf}.",
                     )
                 ]
-            return [_unresolvable(name, origin, f"Interface '{intf}' nicht gefunden oder ohne IP-Adresse.", 4)]
+            return [_unresolvable(name, origin, f"Interface '{intf}' nicht gefunden oder ohne IP-Adresse.", 4, "interface")]
         if kind == "mac":
             macs = obj.raw("macaddr") or []
             return [
@@ -493,9 +521,10 @@ class Resolver:
                     origin,
                     "MAC-Adresse: kein IP-Wert, die Zuordnung erfolgt auf dem Gerät.",
                     4,
+                    "mac",
                 )
             ]
-        return [_unresolvable(name, origin, f"Unbekannter Adresstyp '{kind}'.", 4)]
+        return [_unresolvable(name, origin, f"Unbekannter Adresstyp '{kind}'.", 4, "unknown-type")]
 
     def _address6(self, obj: ConfigObject, origin: list[str]) -> list[ResolvedValue]:
         used: list[str] = []
@@ -515,10 +544,10 @@ class Resolver:
             return [_unresolvable(name, origin, "FQDN-Adresse ohne FQDN.", 6)]
         if kind == "geography":
             country = _one(obj.raw("country")) or name
-            return [_unresolvable(country, origin, f"Geo-Adresse (Land {country}): nur auf dem Gerät auflösbar.", 6)]
+            return [_unresolvable(country, origin, f"Geo-Adresse (Land {country}): nur auf dem Gerät auflösbar.", 6, "geo")]
         if kind == "dynamic":
-            return [_unresolvable(name, origin, "Dynamische Adresse wird erst auf dem Gerät aufgelöst.", 6)]
-        return [_unresolvable(name, origin, f"Unbekannter Adresstyp '{kind}'.", 6)]
+            return [_unresolvable(name, origin, "Dynamische Adresse wird erst auf dem Gerät aufgelöst.", 6, "dynamic")]
+        return [_unresolvable(name, origin, f"Unbekannter Adresstyp '{kind}'.", 6, "unknown-type")]
 
     def _group(self, ctx: _VdomContext, obj: ConfigObject, family: int, path: list[str]) -> list[ResolvedValue]:
         used: list[str] = []
@@ -569,6 +598,7 @@ class Resolver:
                     value.origin,
                     "Ausschluss nicht berechenbar, weil der ausgenommene Wert keine IP-Adresse ist.",
                     value.ip_version,
+                    "exclude",
                 )
             )
         return result
@@ -761,7 +791,7 @@ class Resolver:
                 for suffix in ("name", "id", "group", "custom", "custom-group"):
                     result.internet_services.extend(policy.raw(f"{isdb_prefix}-{suffix}") or [])
                 for name in result.internet_services:
-                    result.values.append(_unresolvable(name, [name], _ISDB_NOTE))
+                    result.values.append(_unresolvable(name, [name], _ISDB_NOTE, None, "isdb"))
             return result
 
         source = side("srcaddr", "srcaddr6", "srcaddr-negate", "internet-service-src", "internet-service-src")
