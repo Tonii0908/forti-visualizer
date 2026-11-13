@@ -90,3 +90,37 @@ def test_no_secret_in_any_cli_output(path, as_json):
     result = run(*args)
     assert SECRET_MARKER not in result.stdout
     assert SECRET_MARKER not in result.stderr
+
+
+# --- resolve (stage 2) ----------------------------------------------------------
+
+
+def test_resolve_json(fixture_path):
+    result = run("resolve", str(fixture_path("res_no_vdom.conf")), "--json")
+    assert result.exit_code == 0, result.output
+    data = json.loads(result.stdout)
+    assert data["meta"]["fortios_version"] == "7.2.5"
+    policies = data["resolved"]["vdoms"][0]["policies"]
+    assert [p["policy_id"] for p in policies] == ["10", "3", "7", "0"]
+
+
+def test_resolve_summary_is_german(fixture_path):
+    result = run("resolve", str(fixture_path("res_negate_isdb.conf")))
+    assert result.exit_code == 0, result.output
+    assert "alles außer:" in result.stdout
+    assert "Implizites Deny" in result.stdout
+    assert "Nicht verarbeitet:" in result.stdout
+
+
+def test_resolve_error(fixture_path):
+    result = run("resolve", str(fixture_path("encrypted_fgbk.conf")))
+    assert result.exit_code == 1
+    assert "verschlüsselt" in result.stderr
+
+
+@pytest.mark.parametrize("path", valid_fixtures() + error_fixtures(), ids=lambda p: p.name)
+@pytest.mark.parametrize("as_json", [True, False])
+def test_no_secret_in_resolve_output(path, as_json):
+    result = run(*(["resolve", str(path)] + (["--json"] if as_json else [])))
+    assert SECRET_MARKER not in result.stdout
+    assert SECRET_MARKER not in result.stderr
