@@ -265,7 +265,7 @@
     return zones.map((z) => (unknown.has(z) ? z + " (unbekannt)" : z)).join("\n");
   }
 
-  function ruleColumns(withReason) {
+  function ruleColumns(reasonTitle) {
     const cols = [];
     if (MULTI) cols.push({ title: "VDOM", cls: "narrow", cell: (r) => r.p.vdom });
     cols.push(
@@ -277,7 +277,7 @@
       { title: "Quellzone", cls: "narrow", cell: (r) => zoneText(r.p.sz, r.p.si) },
       { title: "Zielzone", cls: "narrow", cell: (r) => zoneText(r.p.dz, r.p.di) }
     );
-    if (withReason) cols.push({ title: "Grund", cls: "wide reason", cell: (r) => lines(r.reasons) });
+    if (reasonTitle) cols.push({ title: reasonTitle, cls: "wide reason", cell: (r) => lines(r.reasons) });
     cols.push(
       { title: "Quelle", cls: "wide", cell: (r, t) => addressCell(r.p, "src", t) },
       { title: "Ziel", cls: "wide", cell: (r, t) => addressCell(r.p, "dst", t) },
@@ -300,8 +300,8 @@
     return cls;
   }
 
-  function ruleTable(container, withReason, emptyText) {
-    return new PagedTable(container, ruleColumns(withReason), {
+  function ruleTable(container, reasonTitle, emptyText) {
+    return new PagedTable(container, ruleColumns(reasonTitle), {
       rowClass: ruleClass,
       rowKey: (r) => policyKey(r.p) + "|" + r.p.id,
       emptyText: emptyText,
@@ -389,7 +389,7 @@
   function intervalsOf(index) {
     let iv = bigIntervals.get(index);
     if (!iv) {
-      iv = VALUES[index][V_IV].map((x) => [x[0], BigInt(x[1]), BigInt(x[2])]);
+      iv = VALUES[index][V_IV].map((x) => [x[0], BigInt(x[1]), BigInt(x[2]), x[3] || null]);
       bigIntervals.set(index, iv);
     }
     return iv;
@@ -402,11 +402,17 @@
     return null;
   }
 
-  // Returns {state: "sure" | "possible" | "none", reasons: [...]}.
+  function vipSide(tag) {
+    return tag === "extern" ? "externe Adresse der VIP " : "interne Adresse der VIP ";
+  }
+
+  // Returns {state: "sure" | "possible" | "none", reasons: [...]}. For a sure
+  // hit, reasons holds notes such as which address of a VIP matched.
   function matchSide(side, q) {
     let sure = false;
     let relevant = false;
     const reasons = [];
+    const notes = [];
     for (const index of side.v) {
       const v = VALUES[index];
       if (v[V_VER] !== null && v[V_VER] !== q.version) continue;
@@ -418,14 +424,18 @@
       }
       for (const iv of intervalsOf(index)) {
         if (iv[0] !== q.version) continue;
-        if (iv[1] <= q.lo && q.hi <= iv[2]) sure = true;
-        else if (iv[1] <= q.hi && q.lo <= iv[2]) reasons.push("Netz überschneidet sich teilweise mit " + v[V_TEXT]);
+        if (iv[1] <= q.lo && q.hi <= iv[2]) {
+          sure = true;
+          if (iv[3]) notes.push(vipSide(iv[3]) + v[V_TEXT]);
+        } else if (iv[1] <= q.hi && q.lo <= iv[2]) {
+          reasons.push("Netz überschneidet sich teilweise mit " + (iv[3] ? "der " + vipSide(iv[3]) : "") + v[V_TEXT]);
+        }
       }
     }
     if (side.neg) {
       return relevant ? { state: "possible", reasons: ["Negation: alles außer den aufgelösten Werten"] } : { state: "none", reasons: [] };
     }
-    if (sure) return { state: "sure", reasons: [] };
+    if (sure) return { state: "sure", reasons: notes.filter((n, i) => notes.indexOf(n) === i) };
     if (reasons.length) return { state: "possible", reasons: reasons };
     return { state: "none", reasons: [] };
   }
@@ -470,9 +480,9 @@
         const b = matchSide(p.dst, ipQuery);
         const best = RANK[a.state] >= RANK[b.state] ? a.state : b.state;
         const reasons = [];
-        if (best === "possible") {
-          if (a.state === "possible") for (const r of a.reasons) reasons.push("Quelle: " + r);
-          if (b.state === "possible") for (const r of b.reasons) reasons.push("Ziel: " + r);
+        if (best !== "none") {
+          if (a.state === best) for (const r of a.reasons) reasons.push("Quelle: " + r);
+          if (b.state === best) for (const r of b.reasons) reasons.push("Ziel: " + r);
         }
         parts.push({ state: best, reasons: reasons });
       } else {
@@ -492,7 +502,7 @@
       if (part.state === "possible") state = "possible";
       for (const r of part.reasons) reasons.push(r);
     }
-    return { state: state, reasons: state === "possible" ? reasons : [] };
+    return { state: state, reasons: reasons };
   }
 
   // ---------------------------------------------------------------------------
@@ -528,7 +538,8 @@
 
   const rules = {
     built: false,
-    main: null,
+    list: null, // all filtered rules (no search)
+    sure: null, // sure hits, same container as list
     possible: null,
   };
 
@@ -556,8 +567,9 @@
     if (!MULTI) vdomSelect.closest("label").hidden = true;
     fillZoneSelect($("f-srczone"), "");
     fillZoneSelect($("f-dstzone"), "");
-    rules.main = ruleTable($("rules-main"), false, "Keine Regel passt zu Filter und Suche.");
-    rules.possible = ruleTable($("rules-possible"), true, "Keine Regel mit möglichem Treffer.");
+    rules.list = ruleTable($("rules-main"), null, "Keine Regel passt zu den Filtern.");
+    rules.sure = ruleTable($("rules-main"), "Hinweis zum Treffer", "Keine Regel mit sicherem Treffer.");
+    rules.possible = ruleTable($("rules-possible"), "Grund", "Keine Regel mit möglichem Treffer.");
     const refresh = debounce(updateRules, 150);
     vdomSelect.addEventListener("change", () => {
       fillZoneSelect($("f-srczone"), vdomSelect.value);
@@ -636,7 +648,8 @@
     if (!searching || errors.length) {
       $("rules-main-title").textContent = "Regeln (" + policies.length + " von " + POLICIES.length + ")";
       $("rules-possible-block").hidden = true;
-      rules.main.setRows(policies.map((p) => ({ p: p, reasons: [] })));
+      rules.sure.rows = [];
+      rules.list.setRows(policies.map((p) => ({ p: p, reasons: [] })));
       rules.possible.setRows([]);
       return;
     }
@@ -647,13 +660,14 @@
     const port = portQuery && !portQuery.error ? portQuery : null;
     for (const p of policies) {
       const result = classify(p, ip, side, port);
-      if (result.state === "sure") sure.push({ p: p, reasons: [] });
+      if (result.state === "sure") sure.push({ p: p, reasons: result.reasons });
       else if (result.state === "possible") possible.push({ p: p, reasons: result.reasons });
     }
     $("rules-main-title").textContent = "Sichere Treffer (" + sure.length + ")";
     $("rules-possible-title").textContent = "Möglicherweise (" + possible.length + ")";
     $("rules-possible-block").hidden = false;
-    rules.main.setRows(sure);
+    rules.list.rows = [];
+    rules.sure.setRows(sure);
     rules.possible.setRows(possible);
   }
 
@@ -670,7 +684,7 @@
     for (const m of DATA.matrices) select.appendChild(option(m.vdom, m.vdom));
     if (!MULTI) select.closest("label").hidden = true;
     select.addEventListener("change", () => renderMatrix(select.value));
-    matrixState.table = ruleTable($("matrix-rules"), false, "Keine Regeln.");
+    matrixState.table = ruleTable($("matrix-rules"), null, "Keine Regeln.");
     renderMatrix(select.value);
   }
 
@@ -897,7 +911,7 @@
       ]);
     }
     printSection(area, "Regeln", [
-      fullTable(ruleColumns(false), POLICIES.map((p) => ({ p: p, reasons: [] })), ruleClass),
+      fullTable(ruleColumns(null), POLICIES.map((p) => ({ p: p, reasons: [] })), ruleClass),
     ]);
     const tables = [
       ["Adressen", "addresses"],

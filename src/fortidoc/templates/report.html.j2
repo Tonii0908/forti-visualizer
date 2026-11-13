@@ -75,7 +75,7 @@
           </tbody>
         </table>
         <p class="hint">Excel-Arbeitsmappe und dieser Report entstehen aus demselben aufgelösten Modell und denselben Auffälligkeiten.</p>
-        <p class="hint">{{ search_notice }}</p>
+        <p class="hint">{{ search_notice }} {{ first_match_notice }}</p>
       </div>
     </div>
   </section>
@@ -135,7 +135,7 @@
       <button type="button" id="s-reset">Zurücksetzen</button>
       <span id="s-error" class="error" role="alert"></span>
     </form>
-    <p class="hint notice">{{ search_notice }} Sichere Treffer: Die IP liegt in einem aufgelösten Netz oder Bereich, der Port in einem aufgelösten Dienst. Regeln mit FQDN, Geo, Internet Service, dynamischen oder nicht auflösbaren Adressen oder Negation auf der gesuchten Seite stehen getrennt unter „möglicherweise“.</p>
+    <p class="hint notice">{{ search_notice }} {{ first_match_notice }} Sichere Treffer: Die IP liegt in einem aufgelösten Netz oder Bereich, der Port in einem aufgelösten Dienst. Regeln mit FQDN, Geo, Internet Service, dynamischen oder nicht auflösbaren Adressen oder Negation auf der gesuchten Seite stehen getrennt unter „möglicherweise“.</p>
     <div id="cell-filter" class="chip-row"></div>
     <h3 id="rules-main-title">Regeln</h3>
     <div id="rules-main"></div>

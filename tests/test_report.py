@@ -280,6 +280,16 @@ def test_report_has_all_views_and_the_routing_notice():
     assert "Die Suche wertet nur das Regelwerk aus, kein Routing." in shell
 
 
+def test_search_notice_names_first_match_and_order():
+    from fortidoc.export.html import FIRST_MATCH_NOTICE
+
+    shell = outside_data(render("res_findings.conf"))
+    assert FIRST_MATCH_NOTICE in shell
+    assert "erste passende Regel" in FIRST_MATCH_NOTICE
+    assert "Überdeckung" in FIRST_MATCH_NOTICE
+    assert "Regelreihenfolge" in FIRST_MATCH_NOTICE
+
+
 def test_print_stylesheet_a4_landscape_with_cover():
     shell = outside_data(render("res_findings.conf"))
     assert "@media print" in shell
@@ -350,8 +360,11 @@ def test_negation_is_flagged_not_inverted(search_data):
 def test_vip_value_has_external_and_mapped_interval(search_data):
     (vip,) = side_values(search_data, "13", "dst")
     assert vip[VALUE_KIND] == "vip"
-    assert [4, as_int("203.0.113.10"), as_int("203.0.113.10")] in vip[VALUE_INTERVALS]
-    assert [4, as_int("192.168.50.10"), as_int("192.168.50.10")] in vip[VALUE_INTERVALS]
+    # The fourth element says which side of the VIP an interval belongs to.
+    assert vip[VALUE_INTERVALS] == [
+        [4, as_int("203.0.113.10"), as_int("203.0.113.10"), "extern"],
+        [4, as_int("192.168.50.10"), as_int("192.168.50.10"), "intern"],
+    ]
 
 
 SVC_KIND, SVC_TEXT, SVC_NOTE, SVC_PROTOCOL, SVC_PORTS, SVC_SRC_RESTRICTED, SVC_PROTOCOL_NUMBER = range(7)
