@@ -360,6 +360,7 @@
             "ssl-ssh-profile": "certificate-inspection",
             "av-profile": "default"
           },
+          "applications": [],
           "comments": "outbound web",
           "line": 84,
           "notes": [],
@@ -499,6 +500,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 101,
           "notes": [],
@@ -633,6 +635,7 @@
           "schedule": "always",
           "logtraffic": "utm",
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": 112,
           "notes": [],
@@ -747,6 +750,7 @@
           "schedule": null,
           "logtraffic": null,
           "profiles": {},
+          "applications": [],
           "comments": null,
           "line": null,
           "notes": [
@@ -756,6 +760,7 @@
           "unknown_keys": {}
         }
       ],
+      "local_in": [],
       "addresses": [
         {
           "name": "all",

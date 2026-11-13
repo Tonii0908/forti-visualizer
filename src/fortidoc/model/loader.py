@@ -36,6 +36,9 @@ EVALUATED_SECTIONS: dict[tuple[str, ...], str] = {
     ("firewall", "policy"): "firewall policy",
     ("firewall", "policy6"): "firewall policy6",
     ("firewall", "central-snat-map"): "firewall central-snat-map",
+    ("firewall", "security-policy"): "firewall security-policy",
+    ("firewall", "local-in-policy"): "firewall local-in-policy",
+    ("firewall", "local-in-policy6"): "firewall local-in-policy6",
 }
 
 # Sections evaluated when they appear under 'config global'.
@@ -67,6 +70,27 @@ _POLICY_KEYS = frozenset(
         "internet-service-src-custom-group", "utm-status",
     }
 ) | frozenset(PROFILE_KEYS)
+
+# ASSUMPTION(N1): keys of 'firewall security-policy' (NGFW policy-based mode).
+# FortiOS 6.4 names the IPv4 addresses srcaddr4/dstaddr4, later releases srcaddr/dstaddr.
+APPLICATION_KEYS: tuple[tuple[str, str], ...] = (
+    ("application", "Anwendung"),
+    ("app-category", "App-Kategorie"),
+    ("app-group", "App-Gruppe"),
+    ("url-category", "URL-Kategorie"),
+)
+_SECURITY_POLICY_KEYS = _POLICY_KEYS | frozenset({"srcaddr4", "dstaddr4"}) | frozenset(k for k, _ in APPLICATION_KEYS)
+
+# ASSUMPTION(L1): keys of 'firewall local-in-policy'. Up to FortiOS 7.2 the incoming
+# interface is 'intf', from 7.4 'srcintf'; both are read.
+_LOCAL_IN_KEYS = frozenset(
+    {
+        "uuid", "intf", "srcintf", "srcaddr", "dstaddr", "srcaddr-negate", "dstaddr-negate",
+        "service", "service-negate", "action", "schedule", "status", "comments",
+        "internet-service-src", "internet-service-src-name", "internet-service-src-id",
+        "internet-service-src-group", "internet-service-src-custom", "internet-service-src-custom-group",
+    }
+)
 
 # Keys the resolver evaluates; everything else is reported as unknown.
 KNOWN_KEYS: dict[str, frozenset[str]] = {
@@ -104,6 +128,9 @@ KNOWN_KEYS: dict[str, frozenset[str]] = {
     "firewall service group": frozenset({"member", "comment"}),
     "firewall policy": _POLICY_KEYS,
     "firewall policy6": _POLICY_KEYS,
+    "firewall security-policy": _SECURITY_POLICY_KEYS,
+    "firewall local-in-policy": _LOCAL_IN_KEYS,
+    "firewall local-in-policy6": _LOCAL_IN_KEYS,
     "firewall central-snat-map": frozenset(
         {"uuid", "status", "srcintf", "dstintf", "orig-addr", "dst-addr", "protocol",
          "orig-port", "nat", "nat-ippool", "nat-port", "comments"}

@@ -98,7 +98,7 @@ class Page:
     def ids(self, container: str) -> list[str]:
         """Policy IDs of the rows shown in a result table (column 'ID')."""
         return self.page.eval_on_selector_all(
-            f"#{container} table.data tbody tr", "rows => rows.map(r => r.dataset.key.split('|')[2])"
+            f"#{container} table.data tbody tr", "rows => rows.map(r => r.dataset.key.split('|').pop())"
         )
 
     def close(self):
@@ -134,7 +134,8 @@ def test_xss_texts_are_shown_as_text(open_report):
     assert "</script><img src=x onerror=alert(1)>" in cells
     assert "<img src=x onerror=alert(5)>" in cells
     assert '"><svg onload=alert(2)>' in cells
-    assert page.page.locator("img, svg, iframe").count() == 0
+    assert page.page.locator("img, iframe, svg:not(.diagram)").count() == 0  # only the zone diagram is an SVG
+    assert page.page.locator("svg.diagram [onload], svg.diagram script").count() == 0
     page.view("interfaces")
     assert "<b>{{ 7*7 }}</b>" in page.page.locator("#view-interfaces").inner_text()
 
@@ -183,6 +184,23 @@ def row_text(page, container: str, policy_id: str) -> str:
     return page.page.locator(f"#{container} tr[data-key$='|{policy_id}']").inner_text()
 
 
+def test_local_in_view_lists_its_own_table(open_report):
+    page = open_report("res_local_in.conf")
+    page.view("localin")
+    assert page.ids("localin-rules") == ["1", "2", "3", "4", "1"]
+    assert "FortiGate (lokal)" in page.page.locator("#localin-rules").inner_text()
+    page.view("rules")
+    assert page.ids("rules-main") == ["1", IMPLICIT]
+
+
+def test_application_rule_is_only_a_possible_hit(open_report):
+    page = open_report("res_security_policy.conf")
+    page.search(ip="10.0.1.5", side="src", port="443")
+    assert "1" in page.ids("rules-possible")  # web-apps: application control
+    assert page.ids("rules-main") == ["1", "3", IMPLICIT]  # ssl-inspection, lan-https
+    assert "Anwendung 15832" in page.page.locator("#rules-possible").inner_text()
+
+
 def test_destination_search_matches_vip_external_and_mapped(open_report):
     page = open_report("res_search.conf")
     page.search(ip="203.0.113.10", side="dst")
@@ -207,7 +225,7 @@ def test_hits_are_listed_in_rule_order(open_report):
     page = open_report("res_search.conf")
     page.search(ip="10.10.20.15", side="src")
     positions = page.page.eval_on_selector_all(
-        "#rules-main tbody tr", "rows => rows.map(r => Number(r.dataset.key.split('|')[1]))"
+        "#rules-main tbody tr", "rows => rows.map(r => Number(r.dataset.key.split('|')[2]))"
     )
     assert positions == sorted(positions)
     text = page.page.locator("#view-rules").inner_text()
@@ -356,3 +374,14 @@ def test_large_backup_opens_quickly(browser, tmp_path):
         assert rules_seconds < 3
     finally:
         page.close()
+
+
+def test_zone_diagram_is_drawn(open_report):
+    page = open_report("res_matrix.conf")
+    page.view("diagram")
+    svg = page.page.locator("#view-diagram svg")
+    assert svg.count() == 1
+    box = svg.bounding_box()
+    assert box and box["width"] > 600 and box["height"] > 150
+    assert page.page.locator("#view-diagram path.edge").count() == 8  # one curve per cell and kind
+    assert page.page.locator("#view-diagram g.node").count() == 7

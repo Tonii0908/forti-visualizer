@@ -118,3 +118,25 @@ vorgegeben. Alle anderen Defaults sind Annahmen.
 | R1 | Eine VIP als Ziel einer Regel passt auf ihre externe Adresse (`extip`) und auf die interne Adresse (`mappedip`). Die Suche zählt beide als sicheren Treffer, damit man eine Regel sowohl über die öffentliche als auch über die Server-Adresse findet. `extintf` wird dabei nicht geprüft. | Eine Suche nach der internen Adresse zeigt die VIP-Regel als sicher, obwohl FortiOS vor der Übersetzung nur die externe Adresse vergleicht. |
 | R2 | Ein Dienst `protocol IP` mit `protocol-number 6`, `17` oder `132` umfasst alle Ports von TCP, UDP bzw. SCTP und ist bei der Port-Suche ein sicherer Treffer. ICMP-Dienste passen nie zu einer Port-Suche. | Regeln mit reinen IP-Protokoll-Diensten würden in der Port-Suche falsch einsortiert. |
 | R3 | Policies mit einer anderen Action als `accept` oder `deny` (z. B. `ipsec` in älteren Versionen) zählen in der Zonen-Matrix als „Sonstige“ und im Filter als „sonstige“. | Nur Darstellung. |
+
+## Überdeckte Regeln (Stufe 5)
+
+| Kennung | Annahme | Folge, wenn falsch |
+|---|---|---|
+| U1 | FortiOS wendet innerhalb eines VDOMs und einer Regeltabelle (`firewall policy`, `firewall policy6`, `firewall security-policy`, `firewall local-in-policy`, `firewall local-in-policy6`) die erste passende Regel in Dateireihenfolge an. Eine spätere aktive Regel B gilt als überdeckt, wenn eine frühere aktive Regel A alle Quell- und Zielzonen von B (oder `any`), alle aufgelösten Quell- und Zieladressen und alle Dienste von B umfasst. Geprüft wird nur, was sich beweisen lässt: B muss aus exakten Netzen/Bereichen und aufgelösten Diensten bestehen (kein FQDN, Geo, dynamisch, VIP, Internet Service, keine Negation, kein Objekt ohne subnet). A zählt nur mit seinen exakten Werten. Teilweise Überdeckung wird nicht gemeldet. | Überdeckte Regeln mit nicht prüfbaren Werten fehlen in der Liste (bewusst, damit nichts falsch gemeldet wird). |
+| U2 | Der vordefinierte Schedule `always` schränkt nie ein. Eine Regel A mit einem anderen Schedule überdeckt B nur, wenn B denselben Schedule hat. | Regeln mit umdefiniertem `always` würden falsch bewertet. |
+| U3 | `users` und `groups` schränken eine Regel ein. A mit Benutzern oder Gruppen überdeckt B nur, wenn B genau dieselben hat. | Überdeckungen durch Gruppen-Obermengen fehlen. |
+| U4 | Weitere Bedingungen, die fortidoc nicht auswertet (unbekannte Schlüssel wie `src-vendor-mac`, ZTNA- oder Geräte-Kriterien), werden nicht geprüft. Hat A solche Schlüssel, nennt der Befund sie ausdrücklich. | Eine als überdeckt gemeldete Regel kann doch greifen, wenn A über einen solchen Schlüssel eingeschränkt ist; der Befund weist darauf hin. |
+| U5 | Eine Security-Policy mit Anwendung, Anwendungskategorie, Anwendungsgruppe oder URL-Kategorie erfasst nur einen Teil ihres Adress- und Dienstverkehrs. Sie überdeckt deshalb nie eine spätere Regel; selbst als B kann sie überdeckt sein. | – |
+
+## Local-In- und Security-Policies (Stufe 5)
+
+| Kennung | Annahme | Folge, wenn falsch |
+|---|---|---|
+| L1 | `firewall local-in-policy` und `local-in-policy6` kennen die Schlüssel `intf` (bis FortiOS 7.2) bzw. `srcintf` (ab 7.4), `srcaddr`, `dstaddr`, die Negationen, `service`, `action`, `schedule`, `status`, `comments` und `internet-service-src*`. Beide Interface-Schlüssel werden gelesen. Weitere Schlüssel erscheinen als „nicht ausgewertet“. | Ein unbekannter Schlüssel mit einschränkender Wirkung würde nur als Hinweis gezeigt. |
+| L2 | Local-In-Regel: `action` ist ohne Eintrag `deny`, `status` `enable`, Negationen und `internet-service-src` `disable`. | Action einer Local-In-Regel ohne `set action` falsch angezeigt. |
+| L3 | Local-In-Regeln bilden eine eigene Tabelle mit eigener Reihenfolge. Ihr Ziel ist die FortiGate selbst (Zielzone „FortiGate (lokal)“). fortidoc fügt keine implizite Regel an, weil der Zugriff auf die FortiGate zusätzlich von `allowaccess` am Interface abhängt. Sie stehen nicht in der Zonen-Matrix. „all“ als Ziel gilt bei Local-In-Regeln nicht als Auffälligkeit, weil das Ziel ohnehin nur die Adressen der FortiGate sind. | Verkehr zur FortiGate wäre falsch dargestellt. |
+| N1 | `firewall security-policy` (NGFW-Modus richtlinienbasiert) hat die Schlüssel einer `firewall policy` plus `application`, `app-category`, `app-group`, `url-category`. FortiOS 6.4 schreibt IPv4-Adressen als `srcaddr4`/`dstaddr4`; beide Schreibweisen werden gelesen. | Adressen älterer Security-Policies fehlten. |
+| N2 | Security-Policies haben dieselben Defaults wie `firewall policy` (D1, D2), `action` ist ohne Eintrag `deny`. Sie stehen nach den `firewall policy`-Einträgen in derselben Regeltabelle des VDOMs, mit eigener Kennzeichnung im Hinweis. | Reihenfolge und Defaults wären falsch; die SSL-Inspection-Regeln in `firewall policy` sind keine Zugriffsregeln im engeren Sinn. |
+| N3 | Local-In- und Security-Policies tragen kein eigenes NAT. Die NAT-Spalte bleibt „kein NAT“. | NAT-Angaben fehlten. |
+| N4 | Die Suche im Report zeigt Regeln mit Anwendung oder Kategorie nur als „möglicherweise“, weil die Anwendungserkennung nur auf dem Gerät auswertbar ist. | – |

@@ -42,7 +42,7 @@ from fortidoc.export.common import (
     overview_rows,
     policy_notes,
     profile_lines,
-    service_objects,
+    policy_service_objects,
     service_rows,
     service_values,
     side_objects,
@@ -60,6 +60,7 @@ _RESERVE = 200
 SHEETS = [
     "Übersicht",
     "Policies",
+    "Local-In",
     "Adressen",
     "Dienste",
     "NAT",
@@ -225,7 +226,7 @@ def _policy_row(p: ResolvedPolicy) -> list[object]:
         fit_lines(side_values(p.source), "Adressen"),
         fit_lines(side_objects(p.destination)),
         fit_lines(side_values(p.destination), "Adressen"),
-        fit_lines(service_objects(p.service)),
+        fit_lines(policy_service_objects(p)),
         fit_lines(service_values(p.service), "Dienste"),
         nat_text(p),
         "\n".join(users_lines(p)),
@@ -245,8 +246,8 @@ def _policy_style(policy: ResolvedPolicy) -> str:
     return "wrap"
 
 
-def _policies_sheet(ws, resolved: ResolvedConfig) -> None:
-    policies = [p for vdom in resolved.vdoms for p in vdom.policies]
+def _policies_sheet(ws, resolved: ResolvedConfig, local_in: bool = False) -> None:
+    policies = [p for vdom in resolved.vdoms for p in (vdom.local_in if local_in else vdom.policies)]
     _write_table(
         ws, POLICY_COLUMNS, (_policy_row(p) for p in policies), lambda i: _policy_style(policies[i])
     )
@@ -267,6 +268,7 @@ def build_workbook(resolved: ResolvedConfig, findings: list[Finding], created_at
     sheets = {name: wb.create_sheet(title=name) for name in SHEETS}
     _overview_sheet(sheets["Übersicht"], resolved, findings, created_at)
     _policies_sheet(sheets["Policies"], resolved)
+    _policies_sheet(sheets["Local-In"], resolved, local_in=True)
     _write_table(sheets["Adressen"], ADDRESS_COLUMNS, address_rows(resolved, fit_lines))
     _write_table(sheets["Dienste"], SERVICE_COLUMNS, service_rows(resolved, fit_lines))
     _write_table(sheets["NAT"], NAT_COLUMNS, nat_rows(resolved, fit_lines))

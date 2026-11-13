@@ -234,7 +234,7 @@ def test_no_secret_in_report(path):
         ("res_no_vdom.conf", "fw-res-01"),
         ("no_vdom.conf", "fw-lab-01"),
         ("unknown_sections.conf", "brand-new"),
-        ("res_findings.conf", "localin-only-marker"),
+        ("res_findings.conf", "unevaluated-only-marker"),
     ],
 )
 def test_no_raw_values_from_unevaluated_sections(name, raw):

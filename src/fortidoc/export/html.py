@@ -29,6 +29,7 @@ from markupsafe import Markup
 from fortidoc import __version__
 from fortidoc.core.analyzer import CATEGORIES, count_by_category, zone_matrix
 from fortidoc.core.resolver import value_interval
+from fortidoc.export.diagram import zone_diagram
 from fortidoc.export.common import (
     ADDRESS_COLUMNS,
     COVERAGE_COLUMNS,
@@ -65,8 +66,9 @@ from fortidoc.model.schema import (
 REPORT_NAME = "report.html"
 SEARCH_NOTICE = "Die Suche wertet nur das Regelwerk aus, kein Routing."
 FIRST_MATCH_NOTICE = (
-    "Auf dem Gerät gilt die erste passende Regel. Der Report prüft keine Überdeckung; "
-    "die Treffer stehen in Regelreihenfolge."
+    "Auf dem Gerät gilt die erste passende Regel. Die Suche prüft keine Überdeckung; "
+    "die Treffer stehen in Regelreihenfolge. Regeln, die eine frühere Regel vollständig "
+    "überdeckt, stehen unter Auffälligkeiten."
 )
 
 _PORT_PROTOCOLS = ("TCP", "UDP", "SCTP")
@@ -259,6 +261,7 @@ def _policy(p: ResolvedPolicy, values: _Interner, services: _Interner) -> dict:
         "sched": p.schedule,
         "log": p.logtraffic,
         "prof": profile_lines(p),
+        "apps": p.applications,
         "comment": p.comments,
         "notes": policy_notes(p),
         "line": p.line,
@@ -270,6 +273,7 @@ def build_report_data(resolved: ResolvedConfig, findings: list[Finding], created
     values = _Interner()
     services = _Interner()
     policies = [_policy(p, values, services) for vdom in resolved.vdoms for p in vdom.policies]
+    local_in = [_policy(p, values, services) for vdom in resolved.vdoms for p in vdom.local_in]
     matrices = [
         {
             "vdom": m.vdom,
@@ -292,6 +296,7 @@ def build_report_data(resolved: ResolvedConfig, findings: list[Finding], created
         "values": values.items,
         "svcs": services.items,
         "policies": policies,
+        "localIn": local_in,
         "matrices": matrices,
         "tables": {
             "addresses": table(ADDRESS_COLUMNS, address_rows(resolved)),
@@ -341,6 +346,9 @@ def render_report(resolved: ResolvedConfig, findings: list[Finding], created_at:
         overview=overview_rows(resolved, findings, created),
         counts=data["counts"],
         total_findings=len(findings),
+        local_in_count=len(data["localIn"]),
+        diagrams=[zone_diagram(m) for m in zone_matrix(resolved)],
+        multi_vdom=data["multiVdom"],
         search_notice=SEARCH_NOTICE,
         first_match_notice=FIRST_MATCH_NOTICE,
         csp=Markup(content_security_policy()),

@@ -127,10 +127,19 @@ def service_values(service: ServiceSide) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
+def policy_service_objects(p: ResolvedPolicy) -> list[str]:
+    """Service objects, then the applications and categories of a security policy."""
+    return service_objects(p.service) + p.applications
+
+
 def policy_notes(p: ResolvedPolicy) -> list[str]:
     notes = list(p.notes)
-    if p.section == "firewall policy6":
-        notes.append("IPv6-Regel (firewall policy6).")
+    if p.section == "firewall security-policy":
+        notes.append("Security-Policy (NGFW-Modus richtlinienbasiert).")
+    elif p.section.startswith("firewall local-in"):
+        notes.append("Local-In-Regel: Verkehr zur FortiGate selbst.")
+    if p.section.endswith("policy6"):
+        notes.append(f"IPv6-Regel ({p.section}).")
     elif p.ip_version != "4" and not p.implicit:
         notes.append("IPv6" if p.ip_version == "6" else "IPv4 und IPv6")
     if "action" in p.defaults_applied and not p.implicit:
@@ -193,6 +202,7 @@ def overview_rows(resolved: ResolvedConfig, findings: list[Finding], created_at:
             [f"VDOM {vdom.name}: Regeln (ohne implizites Deny)", len(rules)],
             [f"VDOM {vdom.name}: davon aktiv", sum(1 for p in rules if p.enabled)],
             [f"VDOM {vdom.name}: davon deaktiviert", sum(1 for p in rules if not p.enabled)],
+            [f"VDOM {vdom.name}: Local-In-Regeln", len(vdom.local_in)],
             [f"VDOM {vdom.name}: Adressobjekte", len(vdom.addresses)],
             [f"VDOM {vdom.name}: Dienstobjekte", len(vdom.services)],
             [f"VDOM {vdom.name}: VIPs", len(vdom.vips)],

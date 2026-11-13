@@ -17,6 +17,7 @@ from fortidoc.core.resolver import resolve_config
 from fortidoc.errors import FortidocError
 from fortidoc.export.excel import WORKBOOK_NAME, write_workbook
 from fortidoc.export.html import REPORT_NAME, write_report
+from fortidoc.export.markdown import MARKDOWN_NAME, write_markdown
 from fortidoc.model.schema import AddressSide, ResolvedConfig, ResolvedPolicy
 from fortidoc.parser.conf_parser import ConfigNode, ConfigTree, EditNode, iter_nodes, parse_file
 
@@ -56,7 +57,7 @@ def main(
         Optional[Path], typer.Option("--input", "-i", help="FortiGate-Backup (.conf, unverschlüsselt).")
     ] = None,
     output_dir: Annotated[
-        Optional[Path], typer.Option("--output", "-o", help="Zielordner für regelwerk.xlsx und report.html.")
+        Optional[Path], typer.Option("--output", "-o", help="Zielordner für regelwerk.xlsx, report.html und regelwerk.md.")
     ] = None,
     version: Annotated[
         bool,
@@ -76,9 +77,9 @@ def main(
 
 
 def _generate(input_file: Path, output_dir: Path) -> None:
-    """Parse, resolve and analyse the backup once, then write regelwerk.xlsx and report.html.
+    """Parse, resolve and analyse the backup once, then write regelwerk.xlsx, report.html and regelwerk.md.
 
-    Both files are built from the same resolved model and the same findings.
+    All files are built from the same resolved model and the same findings.
     """
     try:
         tree = parse_file(input_file)
@@ -94,11 +95,13 @@ def _generate(input_file: Path, output_dir: Path) -> None:
         output_dir.mkdir(parents=True, exist_ok=True)
         workbook = write_workbook(resolved, findings, output_dir / WORKBOOK_NAME, created)
         report = write_report(resolved, findings, output_dir / REPORT_NAME, created)
+        markdown = write_markdown(resolved, findings, output_dir / MARKDOWN_NAME, created)
     except OSError as exc:
         typer.echo(f"Fehler: Ausgabe konnte nicht geschrieben werden: {exc.strerror or exc}", err=True)
         raise typer.Exit(1) from None
     typer.echo(f"Geschrieben: {workbook}")
     typer.echo(f"Geschrieben: {report}")
+    typer.echo(f"Geschrieben: {markdown}")
     typer.echo(f"Auffälligkeiten: {len(findings)}")
 
 

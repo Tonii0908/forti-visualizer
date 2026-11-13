@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from fortidoc.core.shadow import Shadowing, find_shadowed
 from fortidoc.model.defaults import FACTORY_OBJECTS
 from fortidoc.model.schema import (
     AddressSide,
@@ -27,9 +28,18 @@ CAT_NO_SUBNET = "Adresse ohne subnet"
 CAT_NO_LOGGING = "ACCEPT ohne Logging"
 CAT_UNUSED = "Unbenutztes Objekt"
 CAT_UNUSED_FACTORY = "Unbenutztes Werksobjekt"
+CAT_SHADOWED = "Überdeckte Regel"
 
 # Every check, in the order the exports list them.
-CATEGORIES = [CAT_DISABLED, CAT_ALL, CAT_NO_SUBNET, CAT_NO_LOGGING, CAT_UNUSED, CAT_UNUSED_FACTORY]
+CATEGORIES = [
+    CAT_DISABLED,
+    CAT_ALL,
+    CAT_NO_SUBNET,
+    CAT_NO_LOGGING,
+    CAT_SHADOWED,
+    CAT_UNUSED,
+    CAT_UNUSED_FACTORY,
+]
 
 # Object sections checked for references -> German label.
 _OBJECT_SECTIONS: dict[tuple[str, ...], str] = {
@@ -50,12 +60,30 @@ _TEXT_KEYS = frozenset({"comment", "comments", "description"})
 
 def analyze(tree: ConfigTree, resolved: ResolvedConfig) -> list[Finding]:
     findings: list[Finding] = []
+    shadowed = {id(s.shadowed): s for s in find_shadowed(resolved)}
     for vdom in resolved.vdoms:
-        for policy in vdom.policies:
+        for policy in [*vdom.policies, *vdom.local_in]:
             if not policy.implicit:
                 findings.extend(_policy_findings(policy))
+                hit = shadowed.get(id(policy))
+                if hit is not None:
+                    findings.append(_shadow_finding(hit))
     findings.extend(_unused_objects(tree, resolved))
     return findings
+
+
+def _shadow_finding(hit: Shadowing) -> Finding:
+    by = hit.by
+    detail = (
+        f"Greift nie: Die frühere Regel ID {by.policy_id} (Position {by.position}, {by.action.upper()}) "
+        "erfasst den gesamten Verkehr dieser Regel."
+    )
+    if hit.different_action:
+        detail += f" Sie hat eine andere Action ({by.action.upper()} statt {hit.shadowed.action.upper()})."
+    else:
+        detail += " Gleiche Action, die Regel ist überflüssig."
+    detail += "".join(" " + note for note in hit.notes)
+    return _finding(hit.shadowed, CAT_SHADOWED, detail)
 
 
 def count_by_category(findings: Iterable[Finding]) -> dict[str, int]:
@@ -131,11 +159,16 @@ def _axis(used: list[str], known: list[str]) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
+def rule_kind(policy: ResolvedPolicy) -> str:
+    """'Regel' or 'Local-In-Regel': the two tables number their positions separately."""
+    return "Local-In-Regel" if policy.section.startswith("firewall local-in") else "Regel"
+
+
 def _finding(policy: ResolvedPolicy, category: str, detail: str) -> Finding:
     return Finding(
         category=category,
         vdom=policy.vdom,
-        object_kind="Regel",
+        object_kind=rule_kind(policy),
         position=policy.position,
         ref=policy.policy_id,
         name=policy.name,
@@ -166,7 +199,12 @@ def _policy_findings(policy: ResolvedPolicy) -> Iterable[Finding]:
         return
 
     parts = []
-    for label, side in (("Quelle", policy.source), ("Ziel", policy.destination)):
+    sides = [("Quelle", policy.source), ("Ziel", policy.destination)]
+    if rule_kind(policy) == "Local-In-Regel":
+        # The destination of a local-in rule is the FortiGate itself: 'all' there means
+        # "every address of the FortiGate", not every host.
+        sides = sides[:1]
+    for label, side in sides:
         hits = _any_values(side, from_default=False)
         if hits:
             parts.append(f"{label}: {', '.join(hits)}")

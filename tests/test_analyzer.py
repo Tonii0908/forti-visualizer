@@ -77,7 +77,7 @@ def test_unused_objects_search_the_whole_tree(findings):
 
 def test_findings_never_contain_raw_values_of_unevaluated_sections(findings):
     text = " ".join(f.detail for f in findings)
-    assert "local-in-policy" not in text
+    assert "shaping-policy" not in text
     assert "intf" not in text
 
 

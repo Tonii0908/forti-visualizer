@@ -61,6 +61,18 @@ DEFAULTS: dict[str, dict[str, list[str]]] = {
 
 # Policy sections share their defaults.
 DEFAULTS["firewall policy6"] = DEFAULTS["firewall policy"]
+# ASSUMPTION(N2): security policies share the defaults of firewall policies (action deny).
+DEFAULTS["firewall security-policy"] = DEFAULTS["firewall policy"]
+# ASSUMPTION(L2): a local-in policy without action denies; negation and Internet Service are off.
+DEFAULTS["firewall local-in-policy"] = {
+    "action": ["deny"],
+    "status": ["enable"],
+    "srcaddr-negate": ["disable"],
+    "dstaddr-negate": ["disable"],
+    "service-negate": ["disable"],
+    "internet-service-src": ["disable"],
+}
+DEFAULTS["firewall local-in-policy6"] = DEFAULTS["firewall local-in-policy"]
 
 # Name of the policy row that stands for the implicit deny at the end of a VDOM.
 # ASSUMPTION(D14): FortiOS reports the implicit deny as policy ID 0.

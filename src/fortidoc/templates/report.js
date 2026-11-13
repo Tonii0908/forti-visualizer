@@ -7,6 +7,7 @@
   const VALUES = DATA.values; // [kind, text, note, reason, fromDefault, intervals, ipVersion]
   const SVCS = DATA.svcs; // [kind, text, note, protocol, [lo, hi] | null, srcRestricted, protocolNumber]
   const POLICIES = DATA.policies;
+  const LOCAL_IN = DATA.localIn;
   const MULTI = DATA.multiVdom;
   const PAGE_SIZES = [50, 100, 250, 500];
   const VALUE_PREVIEW = 6;
@@ -178,7 +179,7 @@
   const expanded = new Set();
 
   function policyKey(p) {
-    return p.vdom + "|" + p.pos;
+    return p.vdom + "|" + p.sec + "|" + p.pos;
   }
 
   function valueNode(v) {
@@ -248,6 +249,7 @@
     const cell = h("div");
     if (svc.neg) cell.appendChild(h("div", "neg", "NICHT (alles außer):"));
     for (const name of svc.o) cell.appendChild(h("div", "obj", name));
+    for (const name of p.apps) cell.appendChild(h("div", "obj app", name));
     if (svc.v.length) {
       const list = valueList(svc.v.map((i) => SVCS[i]), serviceNode, policyKey(p) + "|svc", table);
       if (svc.neg) list.insertBefore(h("div", "neg", "alles außer:"), list.firstChild);
@@ -502,6 +504,11 @@
       if (part.state === "possible") state = "possible";
       for (const r of part.reasons) reasons.push(r);
     }
+    if (p.apps.length) {
+      // ASSUMPTION(N4): the rule also depends on application control, which only the device evaluates.
+      state = "possible";
+      reasons.push("Anwendung/Kategorie: " + p.apps.join(", ") + " (nur auf dem Gerät auswertbar)");
+    }
     return { state: state, reasons: reasons };
   }
 
@@ -527,7 +534,7 @@
         parts.push(side.o.join(" "), side.o6.join(" "), side.isdb.join(" "));
         for (const i of side.v) parts.push(VALUES[i][V_TEXT]);
       }
-      parts.push(p.svc.o.join(" "));
+      parts.push(p.svc.o.join(" "), p.apps.join(" "));
       for (const i of p.svc.v) parts.push(SVCS[i][S_TEXT]);
       parts.push(p.sz.join(" "), p.dz.join(" "), p.users.join(" "), p.prof.join(" "), p.notes.join(" "));
       text = parts.join("\n").toLowerCase();
@@ -862,6 +869,19 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Local-in rules
+  // ---------------------------------------------------------------------------
+
+  let localInBuilt = false;
+
+  function buildLocalIn() {
+    if (localInBuilt) return;
+    localInBuilt = true;
+    const table = ruleTable($("localin-rules"), null, "Das Backup enthält keine Local-In-Regeln.");
+    table.setRows(LOCAL_IN.map((p) => ({ p: p, reasons: [] })));
+  }
+
+  // ---------------------------------------------------------------------------
   // Views
   // ---------------------------------------------------------------------------
 
@@ -874,6 +894,7 @@
     }
     if (name === "rules") buildRules();
     if (name === "matrix") buildMatrix();
+    if (name === "localin") buildLocalIn();
     const section = $("view-" + name);
     if (section) for (const container of section.querySelectorAll(".generic")) buildGeneric(container);
   }
@@ -913,6 +934,12 @@
     printSection(area, "Regeln", [
       fullTable(ruleColumns(null), POLICIES.map((p) => ({ p: p, reasons: [] })), ruleClass),
     ]);
+    if (LOCAL_IN.length) {
+      printSection(area, "Local-In-Regeln", [
+        h("p", "hint", "Verkehr zur FortiGate selbst; eigene Tabelle mit eigener Reihenfolge."),
+        fullTable(ruleColumns(null), LOCAL_IN.map((p) => ({ p: p, reasons: [] })), ruleClass),
+      ]);
+    }
     const tables = [
       ["Adressen", "addresses"],
       ["Dienste", "services"],

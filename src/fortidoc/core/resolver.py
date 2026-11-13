@@ -24,7 +24,7 @@ from fortidoc.model.defaults import (
     PROFILE_KEYS,
     default_for,
 )
-from fortidoc.model.loader import LoadedConfig, LoadedVdom, load
+from fortidoc.model.loader import APPLICATION_KEYS, LoadedConfig, LoadedVdom, load
 from fortidoc.model.schema import (
     UnresolvedReason,
     AddressSide,
@@ -47,6 +47,8 @@ from fortidoc.model.schema import (
     ZoneInfo,
 )
 from fortidoc.parser.conf_parser import ConfigTree
+
+LOCAL_ZONE = "FortiGate (lokal)"  # destination zone of local-in rules
 
 _NOT_FOUND = "Objekt '{name}' nicht gefunden (in den ausgewerteten Abschnitten)."
 _ISDB_NOTE = "Internet Service: Die zugehörigen Adressen und Dienste stehen nur in der Datenbank auf dem Gerät."
@@ -764,17 +766,21 @@ class Resolver:
     # -- policies --------------------------------------------------------------
 
     def resolve(self, policy: ConfigObject, position: int = 0) -> ResolvedPolicy:
-        """Resolve one policy of 'firewall policy' or 'firewall policy6'."""
+        """Resolve one rule of a policy table (forward, security or local-in)."""
         ctx = self.contexts[policy.vdom]
         used: list[str] = []
         notes: list[str] = []
-        is6 = policy.section == "firewall policy6"
+        section = policy.section
+        is6 = section in ("firewall policy6", "firewall local-in-policy6")
+        local = section.startswith("firewall local-in")
+        security = section == "firewall security-policy"
 
         def is_on(key: str) -> bool:
             return _one(_get(policy, key, used)) == "enable"
 
-        src_refs = [self._intf_ref(ctx, n, notes) for n in policy.raw("srcintf") or []]
-        dst_refs = [self._intf_ref(ctx, n, notes) for n in policy.raw("dstintf") or []]
+        src_names = policy.raw("srcintf") or (policy.raw("intf") if local else None) or []
+        src_refs = [self._intf_ref(ctx, n, notes) for n in src_names]
+        dst_refs = [] if local else [self._intf_ref(ctx, n, notes) for n in policy.raw("dstintf") or []]
 
         def side(addr_key: str, addr6_key: str, negate_key: str, isdb_key: str, isdb_prefix: str) -> AddressSide:
             result = AddressSide(negate=is_on(negate_key))
@@ -782,12 +788,15 @@ class Resolver:
                 result.objects6 = list(policy.raw(addr_key) or [])
             else:
                 result.objects = list(policy.raw(addr_key) or [])
+                if security:
+                    # ASSUMPTION(N1): FortiOS 6.4 writes the IPv4 addresses as srcaddr4/dstaddr4.
+                    result.objects += [n for n in policy.raw(f"{addr_key}4") or [] if n not in result.objects]
                 result.objects6 = list(policy.raw(addr6_key) or [])
             for name in result.objects:
                 result.values.extend(self._addr_values(ctx, name, 4, []))
             for name in result.objects6:
                 result.values.extend(self._addr_values(ctx, name, 6, []))
-            if is_on(isdb_key):
+            if isdb_key and is_on(isdb_key):
                 for suffix in ("name", "id", "group", "custom", "custom-group"):
                     result.internet_services.extend(policy.raw(f"{isdb_prefix}-{suffix}") or [])
                 for name in result.internet_services:
@@ -795,7 +804,7 @@ class Resolver:
             return result
 
         source = side("srcaddr", "srcaddr6", "srcaddr-negate", "internet-service-src", "internet-service-src")
-        destination = side("dstaddr", "dstaddr6", "dstaddr-negate", "internet-service", "internet-service")
+        destination = side("dstaddr", "dstaddr6", "dstaddr-negate", "" if local else "internet-service", "internet-service")
 
         service = ServiceSide(objects=list(policy.raw("service") or []), negate=is_on("service-negate"))
         for name in service.objects:
@@ -807,8 +816,18 @@ class Resolver:
         has6 = is6 or bool(source.objects6 or destination.objects6)
         ip_version = "4+6" if has4 and has6 else ("6" if has6 else "4")
 
-        nat = NatInfo(enabled=is_on("nat"))
-        if ctx.central_nat:
+        applications = [
+            f"{label} {value}" for key, label in APPLICATION_KEYS for value in policy.raw(key) or []
+        ]
+        if applications:
+            notes.append("Treffer hängen zusätzlich von der Anwendungserkennung ab; sie ist nur auf dem Gerät auswertbar.")
+
+        # ASSUMPTION(N3): local-in and security policies carry no NAT of their own.
+        forward = section in ("firewall policy", "firewall policy6")
+        nat = NatInfo(enabled=forward and is_on("nat"))
+        if not forward:
+            nat.enabled = False
+        elif ctx.central_nat:
             nat.mode = "central"
         elif nat.enabled:
             nat.ippool = is_on("ippool")
@@ -822,7 +841,7 @@ class Resolver:
         if schedule is None:
             notes.append("Kein Schedule gesetzt.")
 
-        if ctx.central_nat:
+        if ctx.central_nat and forward:
             if any(v.kind == "vip" for v in destination.values):
                 notes.append("Die Regel verweist auf eine VIP, obwohl Central NAT aktiv ist.")
             matching = [vip for vip in ctx.vips.values() if self._vip_intf_matches(vip, src_refs)]
@@ -862,7 +881,7 @@ class Resolver:
             src_interfaces=src_refs,
             dst_interfaces=dst_refs,
             src_zones=_dedupe(r.zone or r.name for r in src_refs),
-            dst_zones=_dedupe(r.zone or r.name for r in dst_refs),
+            dst_zones=[LOCAL_ZONE] if local else _dedupe(r.zone or r.name for r in dst_refs),
             source=source,
             destination=destination,
             service=service,
@@ -872,6 +891,7 @@ class Resolver:
             schedule=schedule,
             logtraffic=logtraffic,
             profiles={key: _text(policy.raw(key)) for key in PROFILE_KEYS if policy.raw(key)},
+            applications=applications,
             comments=_text(policy.raw("comments")),
             line=policy.line,
             notes=notes,
@@ -1032,11 +1052,17 @@ class Resolver:
 
     def resolve_vdom(self, ctx: _VdomContext) -> ResolvedVdom:
         policies: list[ResolvedPolicy] = []
-        for section in ("firewall policy", "firewall policy6"):
+        for section in ("firewall policy", "firewall policy6", "firewall security-policy"):
             for obj in ctx.loaded.objects(section):
                 policies.append(self.resolve(obj, position=len(policies) + 1))
         with_v6 = any("6" in p.ip_version for p in policies)
         policies.append(self._implicit_deny(ctx, len(policies) + 1, with_v6))
+        # ASSUMPTION(L3): local-in rules form a table of their own; fortidoc adds no implicit row,
+        # because traffic to the FortiGate also depends on the interface's 'allowaccess'.
+        local_in: list[ResolvedPolicy] = []
+        for section in ("firewall local-in-policy", "firewall local-in-policy6"):
+            for obj in ctx.loaded.objects(section):
+                local_in.append(self.resolve(obj, position=len(local_in) + 1))
         notes = []
         if ctx.central_nat:
             notes.append(
@@ -1050,6 +1076,7 @@ class Resolver:
             notes=notes,
             zones=self._zone_list(ctx),
             policies=policies,
+            local_in=local_in,
             addresses=self._address_table(ctx),
             services=self._service_table(ctx),
             vips=list(ctx.vips.values()),
