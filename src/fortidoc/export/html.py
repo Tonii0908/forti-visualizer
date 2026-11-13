@@ -219,8 +219,25 @@ class _Interner:
         return index
 
 
+def _runs(items: list) -> list[list[object]]:
+    """[[object, count], ...]: consecutive entries that come from the same referenced object.
+
+    The resolver lists the values of a side object by object, so the flow view
+    can group them into one box per object without repeating the name per value.
+    """
+    runs: list[list[object]] = []
+    for item in items:
+        name = item.origin[0] if item.origin else item.value
+        if runs and runs[-1][0] == name:
+            runs[-1][1] += 1
+        else:
+            runs.append([name, 1])
+    return runs
+
+
 def _side(side: AddressSide, values: _Interner) -> dict:
     return {
+        "g": _runs(side.values),
         "o": side.objects,
         "o6": side.objects6,
         "isdb": side.internet_services,
@@ -232,6 +249,7 @@ def _side(side: AddressSide, values: _Interner) -> dict:
 def _service(service: ServiceSide, services: _Interner) -> dict:
     return {
         "o": service.objects,
+        "g": _runs(service.entries),
         "neg": service.negate,
         "v": [services.add(_service_entry(e)) for e in service.entries],
     }
@@ -285,6 +303,12 @@ def build_report_data(resolved: ResolvedConfig, findings: list[Finding], created
         for m in zone_matrix(resolved)
     ]
 
+    ips = {i.name: i.ip for i in resolved.interfaces}
+    zone_info = {
+        vdom.name: {z.name: [f"{n} {ips[n]}" if ips.get(n) else n for n in z.interfaces] for z in vdom.zones}
+        for vdom in resolved.vdoms
+    }
+
     def table(headers: list[str], rows: list[list[object]]) -> dict:
         return {"headers": headers, "rows": rows}
 
@@ -300,6 +324,7 @@ def build_report_data(resolved: ResolvedConfig, findings: list[Finding], created
         "localIn": local_in,
         "inspection": inspection,
         "matrices": matrices,
+        "zoneInfo": zone_info,
         "tables": {
             "addresses": table(ADDRESS_COLUMNS, address_rows(resolved)),
             "services": table(SERVICE_COLUMNS, service_rows(resolved)),

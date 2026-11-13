@@ -62,7 +62,7 @@ Edge), ohne Server und ohne Internet. CSS, JavaScript und Daten sind eingebettet
 eine Content-Security-Policy verbietet jedes Nachladen. Report und Arbeitsmappe
 entstehen in einem Lauf aus demselben Modell und denselben Auffälligkeiten.
 
-Ansichten: Übersicht, Zonen-Matrix, Zonen-Diagramm, Regeln, Local-In,
+Ansichten: Übersicht, Zonen-Matrix, Zonen-Diagramm, Regel-Flüsse, Regeln, Local-In,
 SSL-Inspection (nur im NGFW-Modus richtlinienbasiert), Adressen, Dienste,
 Interfaces und Zonen, NAT, Auffälligkeiten, Nicht verarbeitet. Tabellen
 zeigen Seiten zu 50 bis 500 Zeilen; Filter und Suche arbeiten auf den Daten, nicht
@@ -76,6 +76,13 @@ auf dem DOM.
 - **Zonen-Diagramm:** dieselben Daten als Bild (eingebettetes SVG): links
   Quellzonen, rechts Zielzonen, eine Linie je Zonen-Kombination und Action, die
   Linienstärke wächst mit der Zahl der Regeln. Erscheint auch im Druck.
+- **Regel-Flüsse:** die Regeln einer Zonen-Kombination als Bild, wie eine
+  Netzwerk-Flussskizze: links die Quellzone, in der Mitte die FortiGate, rechts die
+  Zielzone, jeweils mit Interfaces und Subnetzen. Je Regel ein Kasten mit den
+  Quell- und Zielobjekten und ihren aufgelösten Adressen, dazwischen je Dienst ein
+  Pfeil von Quelle nach Ziel (Farbe nach Protokoll, Zeichen auf der FortiGate-Linie
+  nach Action). 20 Regeln je Seite, einzelne Regel wählbar, Einstieg auch per Klick
+  auf eine Matrix-Zelle. Die gewählte Ansicht erscheint im Druck.
 - **Filter:** VDOM, Quell- und Zielzone (genauer Vergleich, `any` ist ein eigener
   Wert), Action, Status und Freitext.
 - **Suche:** IP-Adresse oder Netz (IPv4/IPv6) als Quelle, Ziel oder beides, dazu

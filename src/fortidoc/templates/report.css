@@ -144,6 +144,42 @@ table { border-collapse: collapse; }
 .diagram .edge.disabled { stroke: var(--disabled); stroke-dasharray: 3 4; }
 .diagram-block + .diagram-block { margin-top: 16px; }
 
+.p-tcp { color: #1f5f99; font-weight: 700; }
+.p-udp { color: #c2410c; font-weight: 700; }
+.p-sctp { color: #7c3aed; font-weight: 700; }
+.p-icmp { color: #1e7b34; font-weight: 700; }
+.p-ip { color: #44546a; font-weight: 700; }
+.flow { display: block; font-size: 11.5px; }
+.flow .lane-head { fill: var(--ink); font-weight: 700; font-size: 13px; }
+.flow .lane-sub { fill: var(--muted); font-size: 11px; }
+.flow .lane-line { stroke: var(--deny); stroke-width: 1.5; }
+.flow .fw-line { stroke: var(--ink); stroke-width: 2; }
+.flow .fw-brick { fill: #b8462e; stroke: #fff; stroke-width: 1; }
+.flow .band { fill: none; stroke: var(--line); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.flow .band.disabled { stroke: var(--disabled); }
+.flow .band-title { fill: var(--head); font-weight: 700; }
+.flow .disabled-text, .flow .band-title.disabled { fill: var(--disabled); }
+.flow .obj rect { fill: var(--panel); stroke: var(--head); stroke-width: 1; }
+.flow .obj .name { fill: var(--ink); font-weight: 700; }
+.flow .obj .addr { fill: var(--ink); }
+.flow .obj .more-addr, .flow .more-text { fill: var(--muted); font-style: italic; }
+.flow .arrow line { stroke-width: 2; }
+.flow .arrow.dashed line { stroke-dasharray: 5 4; }
+.flow .arrow .label { font-weight: 600; paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
+.flow .tcp { stroke: #1f5f99; fill: #1f5f99; }
+.flow .udp { stroke: #c2410c; fill: #c2410c; }
+.flow .sctp { stroke: #7c3aed; fill: #7c3aed; }
+.flow .icmp { stroke: #1e7b34; fill: #1e7b34; }
+.flow .ip { stroke: #44546a; fill: #44546a; }
+.flow .off { stroke: var(--disabled); fill: var(--disabled); }
+.flow .arrow text.tcp, .flow .arrow text.udp, .flow .arrow text.sctp, .flow .arrow text.icmp, .flow .arrow text.ip, .flow .arrow text.off { stroke: var(--bg); }
+.flow .verdict circle { stroke: #fff; stroke-width: 1.5; }
+.flow .verdict.accept circle { fill: var(--accept); }
+.flow .verdict.deny circle { fill: var(--deny); }
+.flow .verdict.other circle { fill: var(--other); }
+.flow .verdict.off circle { fill: var(--disabled); }
+.flow .verdict text { fill: #fff; font-weight: 700; font-size: 11px; }
+
 @page { size: A4 landscape; margin: 10mm; }
 
 @media print {
@@ -157,6 +193,7 @@ table { border-collapse: collapse; }
   #view-overview { display: block !important; }
   #view-diagram { display: block !important; break-before: page; page-break-before: always; }
   #view-diagram .diagram { max-width: 100%; height: auto; }
+  #print-area .flow { max-width: 100%; height: auto; }
   #view-overview .columns { grid-template-columns: 1fr 1fr; }
   .pr-section { break-before: page; page-break-before: always; }
   .scroll { overflow: visible; }

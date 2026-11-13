@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from conftest import FIXTURES
-from fortidoc.core.analyzer import analyze
+from fortidoc.core.analyzer import analyze, zone_matrix
 from fortidoc.core.resolver import resolve_config
 from fortidoc.export.html import REPORT_NAME, write_report
 from fortidoc.parser.conf_parser import parse_file
@@ -394,3 +394,75 @@ def test_inspection_view_in_policy_based_mode(open_report):
     assert "ssl-inspection" in page.page.locator("#inspection-rules").inner_text()
     page = open_report("res_matrix.conf")
     assert not page.page.locator("nav button[data-view='inspection']").is_visible()
+
+
+# ---------------------------------------------------------------------------
+# Rule flows
+# ---------------------------------------------------------------------------
+
+
+def open_flow(page, src: str, dst: str):
+    page.view("flows")
+    page.page.select_option("#fl-src", src)
+    page.page.select_option("#fl-dst", dst)
+    return page.page.locator("#flow svg.flow")
+
+
+def test_flow_draws_one_band_per_rule_of_the_zone_pair(open_report):
+    page = open_report("res_search.conf")
+    svg = open_flow(page, "port1", "port2")
+    assert svg.count() == 1
+    positions = page.page.eval_on_selector_all("#flow g.rule", "g => g.map(x => Number(x.dataset.pos))")
+    resolved = resolve_config(parse_file(FIXTURES / "res_search.conf"))
+    (matrix,) = zone_matrix(resolved)
+    cell = next(c for c in matrix.cells if c.src == "port1" and c.dst == "port2")
+    assert positions == cell.positions
+    text = svg.inner_html()
+    assert "Quellzone: port1" in text and "Zielzone: port2" in text
+    assert "port1 10.10.20.1/24" in text  # interface and subnet in the lane head
+    assert "HTTPS · TCP 443" in text  # service object and port on the arrow
+    assert "10.10.20.15/32" in text  # resolved address in the object box
+
+
+def test_flow_arrows_are_coloured_by_protocol_and_marked_by_action(open_report):
+    page = open_report("res_search.conf")
+    open_flow(page, "port1", "port2")
+    loc = page.page.locator
+    assert loc("#flow g.arrow line.udp").count() >= 1  # DNS-UDP
+    assert loc("#flow g.arrow line.icmp").count() >= 1  # PING
+    assert loc("#flow g.verdict.deny").count() >= 1  # rule 10
+    assert loc("#flow g.verdict.accept").count() >= 1
+
+
+def test_flow_single_rule_selection(open_report):
+    page = open_report("res_search.conf")
+    open_flow(page, "port1", "port2")
+    value = page.page.eval_on_selector("#fl-rule", "s => s.options[1].value")
+    page.page.select_option("#fl-rule", value)
+    assert page.page.locator("#flow g.rule").count() == 1
+
+
+def test_matrix_cell_opens_the_flow(open_report):
+    page = open_report("res_matrix.conf")
+    page.view("matrix")
+    page.page.click("#matrix td.cell[data-src-zone='lan'][data-dst-zone='port4']")
+    page.page.click("#matrix-rules button:has-text('Als Regel-Fluss zeigen')")
+    assert page.page.locator("#view-flows").is_visible()
+    assert page.page.input_value("#fl-src") == "lan" and page.page.input_value("#fl-dst") == "port4"
+    assert page.page.locator("#flow g.rule").count() == 3
+
+
+def test_flow_texts_are_text(open_report):
+    page = open_report("res_xss.conf")
+    svg = open_flow(page, "port1", "port2")
+    assert "<img src=x onerror=alert(5)>" in svg.text_content()
+    assert page.page.locator("#flow img, #flow script, #flow [onload], #flow [onerror]").count() == 0
+
+
+def test_selected_flow_is_printed(open_report):
+    page = open_report("res_search.conf")
+    open_flow(page, "port1", "port2")
+    page.page.evaluate("window.dispatchEvent(new Event('beforeprint'))")
+    area = page.page.locator("#print-area")
+    assert "Regel-Flüsse: port1 → port2" in area.inner_text()
+    assert area.locator("svg.flow").count() == 1

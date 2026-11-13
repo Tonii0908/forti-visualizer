@@ -462,3 +462,32 @@ def test_report_path_is_written(tmp_path):
     resolved, findings = resolved_and_findings("res_matrix.conf")
     path = write_report(resolved, findings, tmp_path / REPORT_NAME, CREATED)
     assert isinstance(path, Path) and path.read_text(encoding="utf-8").startswith("<!DOCTYPE html>")
+
+
+# ---------------------------------------------------------------------------
+# Rule flows: data for the flow view
+# ---------------------------------------------------------------------------
+
+
+def test_values_and_services_name_their_object():
+    data = build_report_data(*resolved_and_findings("res_search.conf"), CREATED)
+    p = policy(data, "1")
+    # Runs of [object, count] cover the value list of each side exactly.
+    for side in (p["src"], p["dst"]):
+        assert sum(n for _, n in side["g"]) == len(side["v"])
+        assert {name for name, _ in side["g"]} <= set(side["o"]) | set(side["o6"]) | set(side["isdb"])
+    assert sum(n for _, n in p["svc"]["g"]) == len(p["svc"]["v"])
+    assert [name for name, _ in p["svc"]["g"]] == p["svc"]["o"]
+
+
+def test_zone_info_lists_interfaces_with_subnet():
+    data = build_report_data(*resolved_and_findings("res_matrix.conf"), CREATED)
+    lan = data["zoneInfo"]["root"]["lan"]
+    assert len(lan) == 2 and all(line.startswith("port") for line in lan)
+    assert any("/" in line for line in lan)
+
+
+def test_flow_view_has_no_svg_namespace_url():
+    html = render("res_search.conf")
+    assert 'id="svg-ns"' in html
+    assert "w3.org" not in html
