@@ -1,0 +1,128 @@
+{
+  "source": {
+    "name": "multiline_string.conf",
+    "sha256": "b9d772c1ff51c6f983f501678c43b344ba5b09bac75fa4ed7e50e083983646aa",
+    "size_bytes": 496
+  },
+  "header": {
+    "raw": "FGT60F-7.2.5-FW-build1517-230606:opmode=0:vdom=0:user=admin",
+    "model": "FGT60F",
+    "version": "7.2.5",
+    "firmware_type": "FW",
+    "build": "1517",
+    "build_date": "230606",
+    "opmode": "0",
+    "vdom_flag": "0",
+    "user": "admin",
+    "options": {
+      "opmode": "0",
+      "vdom": "0",
+      "user": "admin"
+    },
+    "extra": {}
+  },
+  "vdom_mode": "no-vdom",
+  "global_sections": [],
+  "vdoms": [
+    {
+      "name": "root",
+      "declared": false,
+      "declared_line": null,
+      "sections": [
+        {
+          "kind": "config",
+          "path": [
+            "system",
+            "replacemsg",
+            "http",
+            "url-block"
+          ],
+          "line": 2,
+          "end_line": 16,
+          "vdom": "root",
+          "children": [
+            {
+              "kind": "set",
+              "key": "buffer",
+              "values": [
+                "<html><body>\nconfig firewall policy\n    edit 99\n        set action accept\n        set note \"escaped quote inside\"\n    next\nend\nnext\nend\nunset everything\n</body></html>"
+              ],
+              "line": 3,
+              "redacted": false
+            },
+            {
+              "kind": "set",
+              "key": "header",
+              "values": [
+                "http"
+              ],
+              "line": 14,
+              "redacted": false
+            },
+            {
+              "kind": "set",
+              "key": "format",
+              "values": [
+                "html"
+              ],
+              "line": 15,
+              "redacted": false
+            }
+          ]
+        },
+        {
+          "kind": "config",
+          "path": [
+            "firewall",
+            "policy"
+          ],
+          "line": 17,
+          "end_line": 24,
+          "vdom": "root",
+          "children": [
+            {
+              "kind": "edit",
+              "name": "1",
+              "line": 18,
+              "end_line": 23,
+              "closed_by": "next",
+              "vdom": "root",
+              "children": [
+                {
+                  "kind": "set",
+                  "key": "name",
+                  "values": [
+                    "after-multiline"
+                  ],
+                  "line": 19,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "comments",
+                  "values": [
+                    "line one\nline two"
+                  ],
+                  "line": 20,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "action",
+                  "values": [
+                    "deny"
+                  ],
+                  "line": 22,
+                  "redacted": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "outside_sections": [],
+  "comments": [],
+  "warnings": []
+}

@@ -1,0 +1,3 @@
+# Fixtures and golden files must keep their exact bytes (hashes, CRLF fixture).
+tests/fixtures/** -text
+tests/golden/** -text

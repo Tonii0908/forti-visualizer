@@ -1,0 +1,334 @@
+{
+  "source": {
+    "name": "no_vdom.conf",
+    "sha256": "7c2952923c4cba976146bdd89215e0e3338c289925d2f1b04187f8d8e759539f",
+    "size_bytes": 1052
+  },
+  "header": {
+    "raw": "FGT60F-7.2.5-FW-build1517-230606:opmode=0:vdom=0:user=admin",
+    "model": "FGT60F",
+    "version": "7.2.5",
+    "firmware_type": "FW",
+    "build": "1517",
+    "build_date": "230606",
+    "opmode": "0",
+    "vdom_flag": "0",
+    "user": "admin",
+    "options": {
+      "opmode": "0",
+      "vdom": "0",
+      "user": "admin"
+    },
+    "extra": {
+      "conf_file_ver": "1111111111111111111",
+      "buildno": "1517",
+      "global_vdom": "1"
+    }
+  },
+  "vdom_mode": "no-vdom",
+  "global_sections": [],
+  "vdoms": [
+    {
+      "name": "root",
+      "declared": false,
+      "declared_line": null,
+      "sections": [
+        {
+          "kind": "config",
+          "path": [
+            "system",
+            "global"
+          ],
+          "line": 5,
+          "end_line": 9,
+          "vdom": "root",
+          "children": [
+            {
+              "kind": "set",
+              "key": "alias",
+              "values": [
+                "FGT60F"
+              ],
+              "line": 6,
+              "redacted": false
+            },
+            {
+              "kind": "set",
+              "key": "hostname",
+              "values": [
+                "fw-lab-01"
+              ],
+              "line": 7,
+              "redacted": false
+            },
+            {
+              "kind": "set",
+              "key": "timezone",
+              "values": [
+                "28"
+              ],
+              "line": 8,
+              "redacted": false
+            }
+          ]
+        },
+        {
+          "kind": "config",
+          "path": [
+            "system",
+            "interface"
+          ],
+          "line": 10,
+          "end_line": 22,
+          "vdom": "root",
+          "children": [
+            {
+              "kind": "edit",
+              "name": "wan1",
+              "line": 11,
+              "end_line": 16,
+              "closed_by": "next",
+              "vdom": "root",
+              "children": [
+                {
+                  "kind": "set",
+                  "key": "vdom",
+                  "values": [
+                    "root"
+                  ],
+                  "line": 12,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "ip",
+                  "values": [
+                    "192.0.2.1",
+                    "255.255.255.0"
+                  ],
+                  "line": 13,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "allowaccess",
+                  "values": [
+                    "ping",
+                    "https",
+                    "ssh"
+                  ],
+                  "line": 14,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "type",
+                  "values": [
+                    "physical"
+                  ],
+                  "line": 15,
+                  "redacted": false
+                }
+              ]
+            },
+            {
+              "kind": "edit",
+              "name": "internal",
+              "line": 17,
+              "end_line": 21,
+              "closed_by": "next",
+              "vdom": "root",
+              "children": [
+                {
+                  "kind": "set",
+                  "key": "vdom",
+                  "values": [
+                    "root"
+                  ],
+                  "line": 18,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "ip",
+                  "values": [
+                    "10.10.10.1",
+                    "255.255.255.0"
+                  ],
+                  "line": 19,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "type",
+                  "values": [
+                    "hard-switch"
+                  ],
+                  "line": 20,
+                  "redacted": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "config",
+          "path": [
+            "firewall",
+            "address"
+          ],
+          "line": 23,
+          "end_line": 28,
+          "vdom": "root",
+          "children": [
+            {
+              "kind": "edit",
+              "name": "net-lan",
+              "line": 24,
+              "end_line": 27,
+              "closed_by": "next",
+              "vdom": "root",
+              "children": [
+                {
+                  "kind": "set",
+                  "key": "uuid",
+                  "values": [
+                    "11111111-2222-3333-4444-555555555555"
+                  ],
+                  "line": 25,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "subnet",
+                  "values": [
+                    "10.10.10.0",
+                    "255.255.255.0"
+                  ],
+                  "line": 26,
+                  "redacted": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "config",
+          "path": [
+            "firewall",
+            "policy"
+          ],
+          "line": 29,
+          "end_line": 42,
+          "vdom": "root",
+          "children": [
+            {
+              "kind": "edit",
+              "name": "1",
+              "line": 30,
+              "end_line": 41,
+              "closed_by": "next",
+              "vdom": "root",
+              "children": [
+                {
+                  "kind": "set",
+                  "key": "name",
+                  "values": [
+                    "lan-to-wan"
+                  ],
+                  "line": 31,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "uuid",
+                  "values": [
+                    "66666666-7777-8888-9999-000000000000"
+                  ],
+                  "line": 32,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "srcintf",
+                  "values": [
+                    "internal"
+                  ],
+                  "line": 33,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "dstintf",
+                  "values": [
+                    "wan1"
+                  ],
+                  "line": 34,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "srcaddr",
+                  "values": [
+                    "net-lan"
+                  ],
+                  "line": 35,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "dstaddr",
+                  "values": [
+                    "all"
+                  ],
+                  "line": 36,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "action",
+                  "values": [
+                    "accept"
+                  ],
+                  "line": 37,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "schedule",
+                  "values": [
+                    "always"
+                  ],
+                  "line": 38,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "service",
+                  "values": [
+                    "HTTPS",
+                    "DNS"
+                  ],
+                  "line": 39,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "nat",
+                  "values": [
+                    "enable"
+                  ],
+                  "line": 40,
+                  "redacted": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "outside_sections": [],
+  "comments": [],
+  "warnings": []
+}

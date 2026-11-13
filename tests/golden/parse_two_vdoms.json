@@ -1,0 +1,396 @@
+{
+  "source": {
+    "name": "two_vdoms.conf",
+    "sha256": "8554181b827d5d218bce1a7a2d3806e34233fcfa343bb2a94a92c81bc920e329",
+    "size_bytes": 1261
+  },
+  "header": {
+    "raw": "FGVM64-7.4.3-FW-build2573-240201:opmode=0:vdom=1:user=admin",
+    "model": "FGVM64",
+    "version": "7.4.3",
+    "firmware_type": "FW",
+    "build": "2573",
+    "build_date": "240201",
+    "opmode": "0",
+    "vdom_flag": "1",
+    "user": "admin",
+    "options": {
+      "opmode": "0",
+      "vdom": "1",
+      "user": "admin"
+    },
+    "extra": {
+      "conf_file_ver": "2222222222222222222",
+      "buildno": "2573",
+      "global_vdom": "1"
+    }
+  },
+  "vdom_mode": "multi-vdom",
+  "global_sections": [
+    {
+      "kind": "config",
+      "path": [
+        "system",
+        "global"
+      ],
+      "line": 12,
+      "end_line": 15,
+      "vdom": null,
+      "children": [
+        {
+          "kind": "set",
+          "key": "hostname",
+          "values": [
+            "fw-lab-02"
+          ],
+          "line": 13,
+          "redacted": false
+        },
+        {
+          "kind": "set",
+          "key": "vdom-mode",
+          "values": [
+            "multi-vdom"
+          ],
+          "line": 14,
+          "redacted": false
+        }
+      ]
+    },
+    {
+      "kind": "config",
+      "path": [
+        "system",
+        "interface"
+      ],
+      "line": 16,
+      "end_line": 25,
+      "vdom": null,
+      "children": [
+        {
+          "kind": "edit",
+          "name": "port1",
+          "line": 17,
+          "end_line": 20,
+          "closed_by": "next",
+          "vdom": null,
+          "children": [
+            {
+              "kind": "set",
+              "key": "vdom",
+              "values": [
+                "root"
+              ],
+              "line": 18,
+              "redacted": false
+            },
+            {
+              "kind": "set",
+              "key": "ip",
+              "values": [
+                "192.0.2.10",
+                "255.255.255.0"
+              ],
+              "line": 19,
+              "redacted": false
+            }
+          ]
+        },
+        {
+          "kind": "edit",
+          "name": "port2",
+          "line": 21,
+          "end_line": 24,
+          "closed_by": "next",
+          "vdom": null,
+          "children": [
+            {
+              "kind": "set",
+              "key": "vdom",
+              "values": [
+                "dmz"
+              ],
+              "line": 22,
+              "redacted": false
+            },
+            {
+              "kind": "set",
+              "key": "ip",
+              "values": [
+                "172.16.20.1",
+                "255.255.255.0"
+              ],
+              "line": 23,
+              "redacted": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "vdoms": [
+    {
+      "name": "root",
+      "declared": true,
+      "declared_line": 6,
+      "sections": [
+        {
+          "kind": "config",
+          "path": [
+            "system",
+            "settings"
+          ],
+          "line": 29,
+          "end_line": 31,
+          "vdom": "root",
+          "children": [
+            {
+              "kind": "set",
+              "key": "opmode",
+              "values": [
+                "nat"
+              ],
+              "line": 30,
+              "redacted": false
+            }
+          ]
+        },
+        {
+          "kind": "config",
+          "path": [
+            "firewall",
+            "address"
+          ],
+          "line": 32,
+          "end_line": 36,
+          "vdom": "root",
+          "children": [
+            {
+              "kind": "edit",
+              "name": "root-net",
+              "line": 33,
+              "end_line": 35,
+              "closed_by": "next",
+              "vdom": "root",
+              "children": [
+                {
+                  "kind": "set",
+                  "key": "subnet",
+                  "values": [
+                    "10.1.0.0",
+                    "255.255.0.0"
+                  ],
+                  "line": 34,
+                  "redacted": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "config",
+          "path": [
+            "firewall",
+            "policy"
+          ],
+          "line": 37,
+          "end_line": 47,
+          "vdom": "root",
+          "children": [
+            {
+              "kind": "edit",
+              "name": "1",
+              "line": 38,
+              "end_line": 46,
+              "closed_by": "next",
+              "vdom": "root",
+              "children": [
+                {
+                  "kind": "set",
+                  "key": "srcintf",
+                  "values": [
+                    "port1"
+                  ],
+                  "line": 39,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "dstintf",
+                  "values": [
+                    "port1"
+                  ],
+                  "line": 40,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "srcaddr",
+                  "values": [
+                    "root-net"
+                  ],
+                  "line": 41,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "dstaddr",
+                  "values": [
+                    "all"
+                  ],
+                  "line": 42,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "action",
+                  "values": [
+                    "accept"
+                  ],
+                  "line": 43,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "schedule",
+                  "values": [
+                    "always"
+                  ],
+                  "line": 44,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "service",
+                  "values": [
+                    "ALL"
+                  ],
+                  "line": 45,
+                  "redacted": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dmz",
+      "declared": true,
+      "declared_line": 8,
+      "sections": [
+        {
+          "kind": "config",
+          "path": [
+            "firewall",
+            "address"
+          ],
+          "line": 52,
+          "end_line": 56,
+          "vdom": "dmz",
+          "children": [
+            {
+              "kind": "edit",
+              "name": "dmz-web",
+              "line": 53,
+              "end_line": 55,
+              "closed_by": "next",
+              "vdom": "dmz",
+              "children": [
+                {
+                  "kind": "set",
+                  "key": "subnet",
+                  "values": [
+                    "172.16.20.10",
+                    "255.255.255.255"
+                  ],
+                  "line": 54,
+                  "redacted": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "config",
+          "path": [
+            "firewall",
+            "policy"
+          ],
+          "line": 57,
+          "end_line": 66,
+          "vdom": "dmz",
+          "children": [
+            {
+              "kind": "edit",
+              "name": "1",
+              "line": 58,
+              "end_line": 65,
+              "closed_by": "next",
+              "vdom": "dmz",
+              "children": [
+                {
+                  "kind": "set",
+                  "key": "srcintf",
+                  "values": [
+                    "port2"
+                  ],
+                  "line": 59,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "dstintf",
+                  "values": [
+                    "port2"
+                  ],
+                  "line": 60,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "srcaddr",
+                  "values": [
+                    "all"
+                  ],
+                  "line": 61,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "dstaddr",
+                  "values": [
+                    "dmz-web"
+                  ],
+                  "line": 62,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "schedule",
+                  "values": [
+                    "always"
+                  ],
+                  "line": 63,
+                  "redacted": false
+                },
+                {
+                  "kind": "set",
+                  "key": "service",
+                  "values": [
+                    "HTTPS"
+                  ],
+                  "line": 64,
+                  "redacted": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "outside_sections": [],
+  "comments": [],
+  "warnings": []
+}

@@ -1,0 +1,182 @@
+{
+  "source": {
+    "name": "edit_closed_by_end.conf",
+    "sha256": "478fa9edf2b1a6ceb78cad40484f1f69d82694314e26b305040bdf3e15383fea",
+    "size_bytes": 513
+  },
+  "header": {
+    "raw": "FGT60F-7.2.5-FW-build1517-230606:opmode=0:vdom=0:user=admin",
+    "model": "FGT60F",
+    "version": "7.2.5",
+    "firmware_type": "FW",
+    "build": "1517",
+    "build_date": "230606",
+    "opmode": "0",
+    "vdom_flag": "0",
+    "user": "admin",
+    "options": {
+      "opmode": "0",
+      "vdom": "0",
+      "user": "admin"
+    },
+    "extra": {}
+  },
+  "vdom_mode": "no-vdom",
+  "global_sections": [],
+  "vdoms": [
+    {
+      "name": "root",
+      "declared": false,
+      "declared_line": null,
+      "sections": [
+        {
+          "kind": "config",
+          "path": [
+            "firewall",
+            "service",
+            "category"
+          ],
+          "line": 2,
+          "end_line": 8,
+          "vdom": "root",
+          "children": [
+            {
+              "kind": "edit",
+              "name": "General",
+              "line": 3,
+              "end_line": 5,
+              "closed_by": "next",
+              "vdom": "root",
+              "children": [
+                {
+                  "kind": "set",
+                  "key": "comment",
+                  "values": [
+                    "General services."
+                  ],
+                  "line": 4,
+                  "redacted": false
+                }
+              ]
+            },
+            {
+              "kind": "edit",
+              "name": "Web Access",
+              "line": 6,
+              "end_line": 8,
+              "closed_by": "end",
+              "vdom": "root",
+              "children": [
+                {
+                  "kind": "set",
+                  "key": "comment",
+                  "values": [
+                    "Web access."
+                  ],
+                  "line": 7,
+                  "redacted": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "config",
+          "path": [
+            "firewall",
+            "address"
+          ],
+          "line": 9,
+          "end_line": 13,
+          "vdom": "root",
+          "children": [
+            {
+              "kind": "edit",
+              "name": "after",
+              "line": 10,
+              "end_line": 12,
+              "closed_by": "next",
+              "vdom": "root",
+              "children": [
+                {
+                  "kind": "set",
+                  "key": "subnet",
+                  "values": [
+                    "10.2.0.0",
+                    "255.255.0.0"
+                  ],
+                  "line": 11,
+                  "redacted": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "config",
+          "path": [
+            "user",
+            "group"
+          ],
+          "line": 14,
+          "end_line": 21,
+          "vdom": "root",
+          "children": [
+            {
+              "kind": "edit",
+              "name": "grp-with-match",
+              "line": 15,
+              "end_line": 21,
+              "closed_by": "end",
+              "vdom": "root",
+              "children": [
+                {
+                  "kind": "config",
+                  "path": [
+                    "match"
+                  ],
+                  "line": 16,
+                  "end_line": 20,
+                  "vdom": "root",
+                  "children": [
+                    {
+                      "kind": "edit",
+                      "name": "1",
+                      "line": 17,
+                      "end_line": 20,
+                      "closed_by": "end",
+                      "vdom": "root",
+                      "children": [
+                        {
+                          "kind": "set",
+                          "key": "server-name",
+                          "values": [
+                            "ldap1"
+                          ],
+                          "line": 18,
+                          "redacted": false
+                        },
+                        {
+                          "kind": "set",
+                          "key": "group-name",
+                          "values": [
+                            "cn=staff"
+                          ],
+                          "line": 19,
+                          "redacted": false
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "outside_sections": [],
+  "comments": [],
+  "warnings": []
+}
