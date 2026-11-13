@@ -43,6 +43,7 @@
   <button type="button" data-view="overview">Übersicht</button>
   <button type="button" data-view="matrix">Zonen-Matrix</button>
   <button type="button" data-view="diagram">Zonen-Diagramm</button>
+  <button type="button" data-view="flows">Regel-Flüsse</button>
   <button type="button" data-view="rules">Regeln</button>
   <button type="button" data-view="localin">Local-In <span class="count">{{ local_in_count }}</span></button>
   <button type="button" data-view="inspection"{% if not inspection_count %} hidden{% endif %}>SSL-Inspection <span class="count">{{ inspection_count }}</span></button>
@@ -121,6 +122,19 @@
 {% endif %}
     </div>
 {% endfor %}
+  </section>
+
+  <section id="view-flows" class="view" hidden>
+    <h2>Regel-Flüsse</h2>
+    <form id="flow-filters" class="toolbar" autocomplete="off">
+      <label>VDOM <select id="fl-vdom"></select></label>
+      <label>Quellzone <select id="fl-src"></select></label>
+      <label>Zielzone <select id="fl-dst"></select></label>
+      <label>Regel <select id="fl-rule"></select></label>
+    </form>
+    <p class="hint">Links die Quellzone, in der Mitte die FortiGate, rechts die Zielzone. Jeder gestrichelte Kasten ist eine Regel in Regelreihenfolge: links ihre Quellobjekte, rechts ihre Zielobjekte mit den aufgelösten Adressen, dazwischen je Dienst ein Pfeil von Quelle nach Ziel. Das Zeichen auf der FortiGate-Linie zeigt die Action. Lange Listen sind gekürzt; die Regeltabelle zeigt alle Werte.</p>
+    <p class="legend"><span class="p-tcp">━ TCP</span> <span class="p-udp">━ UDP</span> <span class="p-sctp">━ SCTP</span> <span class="p-icmp">━ ICMP</span> <span class="p-ip">━ IP / alle Protokolle</span> <span class="n-accept">✓ Accept</span> <span class="n-deny">✕ Deny</span> <span class="n-disabled">deaktiviert grau</span></p>
+    <div id="flow"></div>
   </section>
 
   <section id="view-rules" class="view" hidden>
@@ -226,6 +240,7 @@
 </main>
 
 <div id="print-area" class="print-only"></div>
+<svg id="svg-ns" class="diagram" hidden aria-hidden="true"></svg>
 
 <script type="application/json" id="report-data">{{ data_json }}</script>
 <script>{{ script }}</script>

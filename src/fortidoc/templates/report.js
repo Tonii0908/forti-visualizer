@@ -799,8 +799,13 @@
       setCellFilter({ vdom: m.vdom, src: cell[0], dst: cell[1], positions: positions });
       updateRules();
     });
+    const flowLink = h("button", "more", "Als Regel-Fluss zeigen");
+    flowLink.type = "button";
+    flowLink.addEventListener("click", () => openFlow(m.vdom, cell[0], cell[1]));
     title.appendChild(document.createTextNode(" "));
     title.appendChild(link);
+    title.appendChild(document.createTextNode(" · "));
+    title.appendChild(flowLink);
     box.insertBefore(title, box.firstChild);
   }
 
@@ -883,6 +888,370 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Rule flows: source zone | FortiGate | destination zone, one band per rule
+  // ---------------------------------------------------------------------------
+
+  // The SVG namespace comes from an inline <svg> of the page, so the script holds no URL.
+  const SVG_NS = $("svg-ns").namespaceURI;
+  const FLOW = {
+    width: 1100,
+    srcX: 20,
+    boxW: 270,
+    fwX: 550,
+    dstX: 810,
+    head: 96,
+    lineH: 15,
+    arrowGap: 26,
+    pageSize: 20,
+    maxObjects: 6,
+    maxAddrs: 6,
+    maxArrows: 8,
+    labelChars: 38,
+  };
+  const flowState = { built: false, page: 0, rules: [], svg: null };
+
+  function s(tag, attrs, text) {
+    const node = document.createElementNS(SVG_NS, tag);
+    if (attrs) for (const name of Object.keys(attrs)) node.setAttribute(name, String(attrs[name]));
+    if (text !== undefined && text !== null) node.textContent = String(text);
+    return node;
+  }
+
+  function tooltip(node, text) {
+    node.appendChild(s("title", null, text));
+    return node;
+  }
+
+  function cut(text, n) {
+    text = String(text);
+    return text.length > n ? text.slice(0, n - 1) + "…" : text;
+  }
+
+  const PROTO_CLASS = { 6: "tcp", 17: "udp", 132: "sctp", 1: "icmp", 58: "icmp" };
+
+  function protoClass(svc) {
+    const kind = svc[S_KIND];
+    if (kind === "ports") return (svc[S_PROTO] || "TCP").toLowerCase();
+    if (kind === "icmp") return "icmp";
+    if (kind === "ip") return PROTO_CLASS[svc[S_PNUM]] || "ip";
+    return "ip";
+  }
+
+  // Objects of one side, each with its resolved addresses: [{name, addrs: [..], title}]
+  function sideObjects(side) {
+    const groups = new Map();
+    const order = [];
+    const add = (name) => {
+      if (!groups.has(name)) {
+        groups.set(name, []);
+        order.push(name);
+      }
+      return groups.get(name);
+    };
+    for (const name of side.o) add(name);
+    for (const name of side.o6) add(name);
+    for (const name of side.isdb) add(name);
+    const owners = [];
+    for (const [name, count] of side.g) for (let k = 0; k < count; k++) owners.push(name);
+    side.v.forEach((i, n) => {
+      const v = VALUES[i];
+      const owner = owners[n] || v[V_TEXT];
+      let text = v[V_TEXT];
+      if (v[V_KIND] === "unresolvable") text += " (" + (REASONS[v[V_REASON]] || "nicht auflösbar") + ")";
+      else if (v[V_KIND] === "fqdn") text += " (FQDN)";
+      else if (v[V_KIND] === "vip") text += " (VIP)";
+      else if (v[V_DEFAULT]) text += " (kein subnet im Backup)";
+      add(owner).push(text);
+    });
+    const objects = order.map((name) => ({ name: name, addrs: groups.get(name) }));
+    if (side.neg && objects.length) objects[0].name = "NICHT: " + objects[0].name;
+    return objects;
+  }
+
+  function serviceArrows(p) {
+    const arrows = [];
+    const owners = [];
+    for (const [name, count] of p.svc.g) for (let k = 0; k < count; k++) owners.push(name);
+    p.svc.v.forEach((i, n) => {
+      const svc = SVCS[i];
+      const owner = owners[n];
+      const text = svc[S_TEXT].replace("/", " ");
+      const label = owner && owner !== svc[S_TEXT] ? owner + " · " + text : text;
+      arrows.push({ label: label, cls: protoClass(svc), dashed: svc[S_KIND] === "unresolvable" });
+    });
+    if (!arrows.length) {
+      const isdb = p.src.isdb.length || p.dst.isdb.length;
+      arrows.push({ label: isdb ? "Dienste des Internet Service" : "kein Dienst", cls: "ip", dashed: true });
+    }
+    if (p.svc.neg) for (const a of arrows) a.label = "alle außer " + a.label;
+    for (const app of p.apps) arrows.push({ label: app, cls: "ip", dashed: true });
+    return arrows;
+  }
+
+  // Height of a column of object boxes and a function that draws it.
+  function objectColumn(objects, x) {
+    const shown = objects.slice(0, FLOW.maxObjects);
+    let height = 0;
+    const items = shown.map((o) => {
+      const addrs = o.addrs.slice(0, FLOW.maxAddrs);
+      const extra = o.addrs.length - addrs.length;
+      const lines = 1 + addrs.length + (extra > 0 ? 1 : 0);
+      const boxH = lines * FLOW.lineH + 10;
+      const item = { o: o, addrs: addrs, extra: extra, y: height, h: boxH };
+      height += boxH + 6;
+      return item;
+    });
+    const rest = objects.length - shown.length;
+    if (rest > 0) height += FLOW.lineH;
+    height = Math.max(height - 6, FLOW.lineH + 10);
+    return {
+      height: height,
+      draw(group, top) {
+        for (const item of items) {
+          const g = s("g", { class: "obj" });
+          tooltip(g, item.o.name + (item.o.addrs.length ? "\n" + item.o.addrs.join("\n") : ""));
+          g.appendChild(s("rect", { x: x, y: top + item.y, width: FLOW.boxW, height: item.h, rx: 4 }));
+          let ty = top + item.y + FLOW.lineH;
+          g.appendChild(s("text", { class: "name", x: x + 8, y: ty }, cut(item.o.name, 40)));
+          for (const a of item.addrs) {
+            ty += FLOW.lineH;
+            g.appendChild(s("text", { class: "addr mono", x: x + 8, y: ty }, cut(a, 44)));
+          }
+          if (item.extra > 0) {
+            ty += FLOW.lineH;
+            g.appendChild(s("text", { class: "more-addr", x: x + 8, y: ty }, "+ " + item.extra + " weitere"));
+          }
+          group.appendChild(g);
+        }
+        if (rest > 0) {
+          group.appendChild(s("text", { class: "more-text", x: x + 8, y: top + height - 3 }, "+ " + rest + " weitere Objekte"));
+        }
+      },
+    };
+  }
+
+  function drawArrow(group, a, y, verdict, off) {
+    const cls = off ? "off" : a.cls;
+    const x1 = FLOW.srcX + FLOW.boxW + 6;
+    const x2 = FLOW.dstX - 8;
+    const g = s("g", { class: "arrow" + (a.dashed ? " dashed" : "") });
+    tooltip(g, a.label);
+    g.appendChild(s("line", { class: cls, x1: x1, y1: y, x2: x2 - 6, y2: y }));
+    g.appendChild(s("polygon", { class: cls, points: x2 + "," + y + " " + (x2 - 10) + "," + (y - 5) + " " + (x2 - 10) + "," + (y + 5) }));
+    g.appendChild(s("text", { class: "label " + cls, x: (x1 + FLOW.fwX) / 2, y: y - 5, "text-anchor": "middle" }, cut(a.label, FLOW.labelChars)));
+    group.appendChild(g);
+    const mark = s("g", { class: "verdict " + verdict });
+    mark.appendChild(s("circle", { cx: FLOW.fwX, cy: y, r: 8 }));
+    mark.appendChild(s("text", { x: FLOW.fwX, y: y + 4, "text-anchor": "middle" }, verdict === "accept" ? "✓" : verdict === "deny" ? "✕" : "?"));
+    group.appendChild(mark);
+  }
+
+  function flowBand(p) {
+    const left = objectColumn(sideObjects(p.src), FLOW.srcX);
+    const right = objectColumn(sideObjects(p.dst), FLOW.dstX);
+    const arrows = serviceArrows(p);
+    const shownArrows = arrows.slice(0, FLOW.maxArrows);
+    const moreArrows = arrows.length - shownArrows.length;
+    const arrowsH = shownArrows.length * FLOW.arrowGap + (moreArrows > 0 ? FLOW.lineH : 0);
+    const inner = Math.max(left.height, right.height, arrowsH);
+    return { p: p, left: left, right: right, arrows: shownArrows, moreArrows: moreArrows, inner: inner, height: inner + 40 };
+  }
+
+  function drawBand(svg, band, top) {
+    const p = band.p;
+    const off = !p.en;
+    const verdict = off ? "off" : p.action === "accept" ? "accept" : p.action === "deny" ? "deny" : "other";
+    const g = s("g", { class: "rule", "data-pos": p.pos });
+    g.appendChild(s("rect", { class: "band" + (off ? " disabled" : ""), x: 8, y: top, width: FLOW.width - 16, height: band.height - 8, rx: 3 }));
+    let title = "Regel ID " + p.id + " (Position " + p.pos + ")";
+    if (p.name) title += " · " + p.name;
+    title += " · " + p.action.toUpperCase() + (off ? " · deaktiviert" : "");
+    g.appendChild(s("text", { class: "band-title" + (off ? " disabled" : ""), x: 16, y: top + 16 }, cut(title, 120)));
+    const bodyTop = top + 26;
+    band.left.draw(g, bodyTop + (band.inner - band.left.height) / 2);
+    band.right.draw(g, bodyTop + (band.inner - band.right.height) / 2);
+    const arrowsH = band.arrows.length * FLOW.arrowGap;
+    let y = bodyTop + (band.inner - arrowsH) / 2 + FLOW.arrowGap / 2 + 4;
+    for (const a of band.arrows) {
+      drawArrow(g, a, y, verdict, off);
+      y += FLOW.arrowGap;
+    }
+    if (band.moreArrows > 0) {
+      g.appendChild(s("text", { class: "more-text", x: FLOW.fwX + 20, y: y - 6 }, "+ " + band.moreArrows + " weitere Dienste"));
+    }
+    svg.appendChild(g);
+  }
+
+  function zoneLines(vdom, zone) {
+    return (DATA.zoneInfo[vdom] || {})[zone] || (zone === "any" ? ["alle Interfaces"] : []);
+  }
+
+  function laneHead(svg, x, anchor, label, zone, vdom) {
+    svg.appendChild(s("text", { class: "lane-head", x: x, y: 18, "text-anchor": anchor }, label + ": " + cut(zone, 40)));
+    const info = zoneLines(vdom, zone);
+    info.slice(0, 4).forEach((line, i) => {
+      svg.appendChild(s("text", { class: "lane-sub mono", x: x, y: 34 + i * 13, "text-anchor": anchor }, cut(line, 44)));
+    });
+    if (info.length > 4) svg.appendChild(s("text", { class: "lane-sub", x: x, y: 34 + 4 * 13, "text-anchor": anchor }, "+ " + (info.length - 4) + " weitere Interfaces"));
+  }
+
+  function firewallIcon(svg) {
+    const w = 36, hgt = 24, x = FLOW.fwX - w / 2, y = 8;
+    const g = s("g", { class: "fw" });
+    tooltip(g, "FortiGate");
+    for (let row = 0; row < 3; row++) {
+      const shift = row % 2 ? 6 : 0;
+      for (let col = -1; col < 3; col++) {
+        const bx = Math.max(x, x + shift + col * 12);
+        const bw = Math.min(x + w, x + shift + col * 12 + 12) - bx;
+        if (bw > 1) g.appendChild(s("rect", { class: "fw-brick", x: bx, y: y + row * 8, width: bw, height: 8 }));
+      }
+    }
+    svg.appendChild(g);
+    svg.appendChild(s("text", { class: "lane-sub", x: FLOW.fwX, y: y + hgt + 14, "text-anchor": "middle" }, "FortiGate"));
+  }
+
+  function renderFlow(vdom, src, dst, policies) {
+    const bands = policies.map(flowBand);
+    const infoLines = Math.max(zoneLines(vdom, src).length, zoneLines(vdom, dst).length);
+    const head = Math.max(FLOW.head, 34 + Math.min(infoLines, 5) * 13 + 22);
+    let height = head;
+    for (const b of bands) height += b.height;
+    height += 10;
+    const svg = s("svg", {
+      class: "diagram flow",
+      viewBox: "0 0 " + FLOW.width + " " + height,
+      width: FLOW.width,
+      height: height,
+      role: "img",
+      "aria-label": "Regel-Flüsse " + src + " nach " + dst,
+    });
+    laneHead(svg, FLOW.srcX, "start", "Quellzone", src, vdom);
+    laneHead(svg, FLOW.dstX + FLOW.boxW, "end", "Zielzone", dst, vdom);
+    firewallIcon(svg);
+    svg.appendChild(s("line", { class: "lane-line", x1: 0, y1: head - 14, x2: FLOW.width, y2: head - 14 }));
+    svg.appendChild(s("line", { class: "fw-line", x1: FLOW.fwX, y1: 56, x2: FLOW.fwX, y2: height }));
+    let top = head - 4;
+    for (const b of bands) {
+      drawBand(svg, b, top);
+      top += b.height;
+    }
+    return svg;
+  }
+
+  function flowMatrix(vdom) {
+    return DATA.matrices.find((m) => m.vdom === vdom);
+  }
+
+  function fillFlowZones() {
+    const m = flowMatrix($("fl-vdom").value);
+    const srcSel = $("fl-src");
+    const current = srcSel.value;
+    clear(srcSel);
+    const sources = m ? m.rows.filter((z) => m.cells.some((c) => c[0] === z)) : [];
+    for (const z of sources) srcSel.appendChild(option(z, z));
+    if (sources.indexOf(current) >= 0) srcSel.value = current;
+    fillFlowTargets();
+  }
+
+  function fillFlowTargets() {
+    const m = flowMatrix($("fl-vdom").value);
+    const dstSel = $("fl-dst");
+    const current = dstSel.value;
+    clear(dstSel);
+    const srcZone = $("fl-src").value;
+    const targets = m ? m.cols.filter((z) => m.cells.some((c) => c[0] === srcZone && c[1] === z)) : [];
+    for (const z of targets) dstSel.appendChild(option(z, z));
+    if (targets.indexOf(current) >= 0) dstSel.value = current;
+    fillFlowRules();
+  }
+
+  function fillFlowRules() {
+    const m = flowMatrix($("fl-vdom").value);
+    const srcZone = $("fl-src").value;
+    const dstZone = $("fl-dst").value;
+    const cell = m ? m.cells.find((c) => c[0] === srcZone && c[1] === dstZone) : null;
+    const positions = new Set(cell ? cell[6] : []);
+    flowState.rules = POLICIES.filter((p) => m && p.vdom === m.vdom && positions.has(p.pos));
+    const ruleSel = $("fl-rule");
+    clear(ruleSel);
+    ruleSel.appendChild(option("", "alle (" + flowState.rules.length + ")"));
+    for (const p of flowState.rules) ruleSel.appendChild(option(String(p.pos), "ID " + p.id + (p.name ? " · " + cut(p.name, 30) : "")));
+    flowState.page = 0;
+    updateFlow();
+  }
+
+  function updateFlow() {
+    const box = $("flow");
+    clear(box);
+    flowState.svg = null;
+    const vdom = $("fl-vdom").value;
+    const srcZone = $("fl-src").value;
+    const dstZone = $("fl-dst").value;
+    const pos = $("fl-rule").value;
+    let rules = flowState.rules;
+    if (pos) rules = rules.filter((p) => String(p.pos) === pos);
+    if (!rules.length) {
+      box.appendChild(h("p", "empty", "Keine Regeln für diese Auswahl."));
+      return;
+    }
+    const pages = Math.max(1, Math.ceil(rules.length / FLOW.pageSize));
+    flowState.page = Math.min(flowState.page, pages - 1);
+    const start = flowState.page * FLOW.pageSize;
+    const shown = rules.slice(start, start + FLOW.pageSize);
+    if (pages > 1) {
+      const bar = h("div", "pager");
+      const nav = (label, page, disabled, cls) => {
+        const b = h("button", cls, label);
+        b.type = "button";
+        b.disabled = disabled;
+        b.addEventListener("click", () => {
+          flowState.page = page;
+          updateFlow();
+        });
+        return b;
+      };
+      append(bar, [
+        nav("‹ Zurück", flowState.page - 1, flowState.page === 0, "prev"),
+        h("span", "page-info", "Regeln " + (start + 1) + "–" + (start + shown.length) + " von " + rules.length),
+        nav("Weiter ›", flowState.page + 1, flowState.page >= pages - 1, "next"),
+      ]);
+      box.appendChild(bar);
+    }
+    const wrap = h("div", "scroll");
+    flowState.svg = renderFlow(vdom, srcZone, dstZone, shown);
+    wrap.appendChild(flowState.svg);
+    box.appendChild(wrap);
+  }
+
+  function buildFlows() {
+    if (flowState.built) return;
+    flowState.built = true;
+    const vdomSel = $("fl-vdom");
+    for (const m of DATA.matrices) vdomSel.appendChild(option(m.vdom, m.vdom));
+    if (!MULTI) vdomSel.closest("label").hidden = true;
+    vdomSel.addEventListener("change", fillFlowZones);
+    $("fl-src").addEventListener("change", fillFlowTargets);
+    $("fl-dst").addEventListener("change", fillFlowRules);
+    $("fl-rule").addEventListener("change", () => {
+      flowState.page = 0;
+      updateFlow();
+    });
+    $("flow-filters").addEventListener("submit", (event) => event.preventDefault());
+    fillFlowZones();
+  }
+
+  function openFlow(vdom, src, dst) {
+    showView("flows");
+    $("fl-vdom").value = vdom;
+    fillFlowZones();
+    $("fl-src").value = src;
+    fillFlowTargets();
+    $("fl-dst").value = dst;
+    fillFlowRules();
+  }
+
+  // ---------------------------------------------------------------------------
   // Views
   // ---------------------------------------------------------------------------
 
@@ -895,6 +1264,7 @@
     }
     if (name === "rules") buildRules();
     if (name === "matrix") buildMatrix();
+    if (name === "flows") buildFlows();
     if (name === "localin") buildOwnTable("localin-rules", LOCAL_IN, "Das Backup enthält keine Local-In-Regeln.");
     if (name === "inspection") buildOwnTable("inspection-rules", INSPECTION, "Keine SSL-Inspection-Regeln.");
     const section = $("view-" + name);
@@ -947,6 +1317,9 @@
         h("p", "hint", "NGFW-Modus richtlinienbasiert: firewall policy steuert SSL-Inspection und Authentifizierung; eigene Tabelle."),
         fullTable(ruleColumns(null), INSPECTION.map((p) => ({ p: p, reasons: [] })), ruleClass),
       ]);
+    }
+    if (flowState.svg) {
+      printSection(area, "Regel-Flüsse: " + $("fl-src").value + " → " + $("fl-dst").value, [flowState.svg.cloneNode(true)]);
     }
     const tables = [
       ["Adressen", "addresses"],
