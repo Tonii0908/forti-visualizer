@@ -19,6 +19,7 @@ from collections.abc import Iterable
 from fortidoc.model.defaults import (
     IMPLICIT_DENY_ID,
     INTERFACE_TYPE_LABELS,
+    PREDEFINED_ANY_ADDRESSES,
     PROFILE_KEYS,
     default_for,
 )
@@ -412,7 +413,7 @@ class Resolver:
         name = obj.name or ""
         if kind == "ipmask":
             value = _network_value(_get(obj, "subnet", used) or [], origin)
-            if "subnet" in used:
+            if "subnet" in used and name not in PREDEFINED_ANY_ADDRESSES:
                 _mark_default(value, "kein subnet im Backup, FortiOS-Default 0.0.0.0/0")
             return [value]
         if kind == "iprange":
@@ -502,7 +503,7 @@ class Resolver:
         name = obj.name or ""
         if kind == "ipprefix":
             value = _network_value(_get(obj, "ip6", used) or [], origin)
-            if "ip6" in used:
+            if "ip6" in used and name not in PREDEFINED_ANY_ADDRESSES:
                 _mark_default(value, "kein ip6 im Backup, FortiOS-Default ::/0")
             return [value]
         if kind == "iprange":

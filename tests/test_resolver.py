@@ -602,10 +602,24 @@ def test_address_without_subnet_gets_default_note():
     assert src.from_default
     assert "kein subnet im Backup, FortiOS-Default" in src.note
     (dst,) = p.destination.values
-    assert dst.from_default  # 'all' without subnet looks the same in the backup
+    # The predefined 'all' is 0.0.0.0/0 by definition, not a missing subnet (D15).
+    assert dst.value == "0.0.0.0/0" and not dst.from_default and dst.note is None
     objs = {(a.category, a.name): a for a in root.addresses}
     v6 = objs[("address6", "all")].values[0]
-    assert v6.value == "::/0" and v6.from_default and "ip6" in v6.note
+    assert v6.value == "::/0" and not v6.from_default
+
+
+def test_address6_without_ip6_gets_default_note(tmp_path):
+    conf = tmp_path / "v6.conf"
+    conf.write_text(
+        "#config-version=FGT60F-7.2.5-FW-build1517-230606:opmode=0:vdom=0:user=admin\n"
+        'config firewall address6\n    edit "net6-empty"\n    next\nend\n',
+        encoding="utf-8",
+    )
+    resolved = resolve_config(parse_file(conf))
+    (obj,) = resolved.vdom("root").addresses
+    (value,) = obj.values
+    assert value.value == "::/0" and value.from_default and "kein ip6 im Backup" in value.note
 
 
 def test_explicit_subnet_has_no_default_flag(types):

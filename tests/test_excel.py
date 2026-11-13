@@ -115,7 +115,7 @@ EXPECTED_ROWS = {
     },
     "res_two_vdoms.conf": {
         "Policies": 5, "Adressen": 4, "Dienste": 2, "NAT": 0, "Interfaces": 3,
-        "Auffälligkeiten": 5, "Nicht verarbeitet": 0,
+        "Auffälligkeiten": 3, "Nicht verarbeitet": 0,
     },
     "res_vip_central_nat.conf": {"Policies": 4, "Adressen": 5, "Dienste": 1, "NAT": 5, "Interfaces": 3},
     "res_services.conf": {"Dienste": 15},

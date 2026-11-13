@@ -92,3 +92,39 @@ def test_findings_are_deterministic():
     a = [f.model_dump() for f in findings_for("res_findings.conf")]
     b = [f.model_dump() for f in findings_for("res_findings.conf")]
     assert a == b
+
+
+def test_predefined_all_without_subnet_is_all_not_missing_subnet(tmp_path):
+    conf = tmp_path / "all_no_subnet.conf"
+    conf.write_text(
+        """#config-version=FGT60F-7.2.5-FW-build1517-230606:opmode=0:vdom=0:user=admin
+config firewall address
+    edit "all"
+    next
+end
+config firewall address6
+    edit "all6"
+    next
+end
+config firewall policy
+    edit 1
+        set srcintf "port1"
+        set dstintf "port2"
+        set srcaddr "all"
+        set dstaddr "all"
+        set srcaddr6 "all6"
+        set dstaddr6 "all6"
+        set action accept
+        set schedule "always"
+        set service "HTTPS"
+    next
+end
+""",
+        encoding="utf-8",
+    )
+    tree = parse_file(conf)
+    found = analyze(tree, resolve_config(tree))
+    hits = by_category(found, CAT_ALL)
+    assert [f.ref for f in hits] == ["1"]
+    assert "0.0.0.0/0 (all)" in hits[0].detail and "::/0 (all6)" in hits[0].detail
+    assert by_category(found, CAT_NO_SUBNET) == []
