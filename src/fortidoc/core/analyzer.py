@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from fortidoc.model.defaults import FACTORY_OBJECTS
 from fortidoc.model.schema import AddressSide, Finding, ResolvedConfig, ResolvedPolicy
 from fortidoc.parser.conf_parser import ConfigNode, ConfigTree, EditNode, SetNode
 
@@ -18,6 +19,10 @@ CAT_ALL = "ACCEPT mit all/ALL"
 CAT_NO_SUBNET = "Adresse ohne subnet"
 CAT_NO_LOGGING = "ACCEPT ohne Logging"
 CAT_UNUSED = "Unbenutztes Objekt"
+CAT_UNUSED_FACTORY = "Unbenutztes Werksobjekt"
+
+# Every check, in the order the exports list them.
+CATEGORIES = [CAT_DISABLED, CAT_ALL, CAT_NO_SUBNET, CAT_NO_LOGGING, CAT_UNUSED, CAT_UNUSED_FACTORY]
 
 # Object sections checked for references -> German label.
 _OBJECT_SECTIONS: dict[tuple[str, ...], str] = {
@@ -44,6 +49,14 @@ def analyze(tree: ConfigTree, resolved: ResolvedConfig) -> list[Finding]:
                 findings.extend(_policy_findings(policy))
     findings.extend(_unused_objects(tree, resolved))
     return findings
+
+
+def count_by_category(findings: Iterable[Finding]) -> dict[str, int]:
+    """Number of findings per check, every check listed (also with 0)."""
+    counts = dict.fromkeys(CATEGORIES, 0)
+    for finding in findings:
+        counts[finding.category] = counts.get(finding.category, 0) + 1
+    return counts
 
 
 # ---------------------------------------------------------------------------
@@ -170,15 +183,23 @@ def _unused_objects(tree: ConfigTree, resolved: ResolvedConfig) -> list[Finding]
                 if kind == "VIP" and central_nat.get(vdom.name):
                     continue  # with central NAT a VIP works without any reference
                 users = refs.get(edit.name, set()) - {(path, edit.name)}
-                if not users:
-                    findings.append(
-                        Finding(
-                            category=CAT_UNUSED,
-                            vdom=vdom.name,
-                            object_kind=kind,
-                            ref=edit.name,
-                            name=edit.name,
-                            detail="Kein Verweis im gesamten Backup gefunden.",
-                        )
+                if users:
+                    continue
+                # ASSUMPTION(X7): factory-default names, see defaults.FACTORY_OBJECTS.
+                factory = edit.name in FACTORY_OBJECTS.get(" ".join(path), frozenset())
+                findings.append(
+                    Finding(
+                        category=CAT_UNUSED_FACTORY if factory else CAT_UNUSED,
+                        vdom=vdom.name,
+                        object_kind=kind,
+                        ref=edit.name,
+                        name=edit.name,
+                        detail=(
+                            "Kein Verweis im gesamten Backup gefunden. Der Name gehört zu den "
+                            "werkseitig angelegten Objekten (siehe ANNAHMEN.md, X7)."
+                            if factory
+                            else "Kein Verweis im gesamten Backup gefunden."
+                        ),
                     )
+                )
     return findings

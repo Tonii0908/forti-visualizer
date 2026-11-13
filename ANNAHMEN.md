@@ -5,7 +5,7 @@ das nicht durch eine echte Konfiguration oder Dokumentation abgesichert ist.
 Im Code sind diese Stellen mit `ASSUMPTION(<Kennung>)` markiert.
 Bitte bei Gelegenheit gegen echte Backups prüfen und hier abhaken.
 
-Stand: Stufe 2 (Datenmodell und Resolver)
+Stand: Stufe 4 (HTML-Report)
 
 ## Tokenizer
 
@@ -108,3 +108,5 @@ vorgegeben. Alle anderen Defaults sind Annahmen.
 | X4 | Unbenutzte Objekte: Ein Objekt gilt als benutzt, wenn sein Name als Wert irgendeines `set` im gesamten Backup vorkommt (auch in nicht ausgewerteten Abschnitten, in `config global`, außerhalb von global/vdom und im eigenen VDOM; Verweise aus anderen VDOMs zählen nicht), außer im eigenen Eintrag. Kommentarfelder (`comment`, `comments`, `description`) und geschwärzte Werte zählen nicht. Geprüft werden Adressen, Adressgruppen (IPv4/IPv6), VIPs, VIP-Gruppen, IP-Pools, Dienste und Dienstgruppen. Vordefinierte Objekte (z. B. `FABRIC_DEVICE`, `ALL_TCP`) werden genauso geprüft. | Objekte würden fälschlich als unbenutzt oder benutzt gemeldet. |
 | X5 | Bei Central NAT wirken VIPs ohne Verweis in einer Regel. Sie werden daher nie als unbenutzt gemeldet. | VIPs würden fälschlich als unbenutzt gemeldet. |
 | X6 | Excel: Alle Texte aus dem Backup werden als Text geschrieben, nie als Formel. Zeichen, die XLSX nicht erlaubt (Steuerzeichen außer Tab und Zeilenumbruch), werden entfernt. Listen, die eine Zelle (32.767 Zeichen) sprengen würden, enden mit „… und N weitere“ und verweisen auf den Reiter Adressen bzw. Dienste; andere zu lange Texte enden mit „… (gekürzt)“. | Nur Darstellung. |
+| X7 | Werkseitige Objekte: Die Namensliste steht in `FACTORY_OBJECTS` in `src/fortidoc/model/defaults.py`, getrennt nach Abschnitt (Adressen, Adressgruppen, IPv6-Adressen, Dienste, Dienstgruppen). Sie stammt aus Erfahrung mit FortiOS 6.x/7.x, ist **nicht gegen eine Werkskonfiguration geprüft** und enthält auch ältere Namen (5.6/6.0, z. B. die Ausnahmen der SSL-Inspection wie `apple`, `itunes`). Namen werden mit Groß- und Kleinschreibung verglichen. Ein unbenutztes Objekt mit einem dieser Namen erscheint als „Unbenutztes Werksobjekt“, alle anderen als „Unbenutztes Objekt“. Ein selbst angelegtes Objekt mit einem Werksnamen wird ebenfalls als Werksobjekt gemeldet. | Ein Werksobjekt fehlt in der Liste: Es erscheint als „Unbenutztes Objekt“. Ein Name steht zu Unrecht in der Liste: Ein eigenes Objekt erscheint als Werksobjekt. In beiden Fällen bleibt es gemeldet, nur in der anderen Prüfung. |
+| X8 | Verweise werden über den Namen gefunden (X4), ohne Unterscheidung von IPv4 und IPv6. Eine IPv6-Adresse `all` gilt deshalb als benutzt, sobald irgendwo die IPv4-Adresse `all` verwendet wird. | Gleichnamige IPv4- und IPv6-Objekte werden nicht als unbenutzt gemeldet, auch wenn nur eines verwendet wird. |

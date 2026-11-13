@@ -25,6 +25,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from fortidoc import __version__
+from fortidoc.core.analyzer import count_by_category
 from fortidoc.model.schema import (
     AddressSide,
     Finding,
@@ -269,6 +270,13 @@ def _write_table(
     ws.auto_filter.ref = f"A1:{get_column_letter(len(headers))}{row_number}"
 
 
+def policy_id_cell(policy_id: str) -> int | str:
+    """A purely numeric policy ID as a number, so the column sorts numerically."""
+    if policy_id.isascii() and policy_id.isdigit() and (policy_id == "0" or not policy_id.startswith("0")):
+        return int(policy_id)
+    return policy_id
+
+
 def _policy_row(p: ResolvedPolicy) -> list[object]:
     notes = list(p.notes)
     if p.section == "firewall policy6":
@@ -290,7 +298,7 @@ def _policy_row(p: ResolvedPolicy) -> list[object]:
     return [
         p.vdom,
         p.position,
-        p.policy_id,
+        policy_id_cell(p.policy_id),
         p.name,
         "aktiv" if p.enabled else "deaktiviert",
         p.action.upper(),
@@ -356,8 +364,9 @@ def _overview_sheet(ws, resolved: ResolvedConfig, findings: list[Finding], creat
             (f"VDOM {vdom.name}: Central-SNAT-Regeln", len(vdom.snat)),
             (f"VDOM {vdom.name}: Central NAT", "ja" if vdom.central_nat else "nein"),
         ]
+    rows.append(("Auffälligkeiten gesamt", len(findings)))
+    rows += [(f"Auffälligkeiten: {category}", count) for category, count in count_by_category(findings).items()]
     rows += [
-        ("Auffälligkeiten", len(findings)),
         ("Nicht verarbeitete Abschnitte", len(resolved.coverage.unprocessed_sections)),
         ("Nicht ausgewertete Schlüssel", len(resolved.coverage.unknown_keys)),
     ]

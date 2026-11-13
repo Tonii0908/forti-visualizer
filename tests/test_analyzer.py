@@ -11,7 +11,10 @@ from fortidoc.core.analyzer import (
     CAT_NO_LOGGING,
     CAT_NO_SUBNET,
     CAT_UNUSED,
+    CAT_UNUSED_FACTORY,
+    CATEGORIES,
     analyze,
+    count_by_category,
 )
 from fortidoc.core.resolver import resolve_config
 from fortidoc.parser.conf_parser import parse_file
@@ -128,3 +131,60 @@ end
     assert [f.ref for f in hits] == ["1"]
     assert "0.0.0.0/0 (all)" in hits[0].detail and "::/0 (all6)" in hits[0].detail
     assert by_category(found, CAT_NO_SUBNET) == []
+
+
+# ---------------------------------------------------------------------------
+# Factory-default objects (Stage 3 follow-up)
+# ---------------------------------------------------------------------------
+
+
+def test_unused_factory_objects_are_their_own_check():
+    found = findings_for("res_factory_objects.conf")
+    factory = {(f.object_kind, f.ref) for f in by_category(found, CAT_UNUSED_FACTORY)}
+    assert factory == {
+        ("Adresse", "none"),
+        ("Adresse", "FABRIC_DEVICE"),
+        ("Adressgruppe", "G Suite"),
+        ("IPv6-Adresse", "SSLVPN_TUNNEL_IPv6_ADDR1"),
+        ("Dienst", "ALL"),
+        ("Dienst", "AFS3"),
+        ("Dienst", "GOPHER"),
+        ("Dienst", "QUAKE"),
+        ("Dienstgruppe", "Web Access"),
+    }
+    # References are compared by name (X4): the IPv6 'all' counts as used because
+    # the policy uses the IPv4 'all'.
+    own = {(f.object_kind, f.ref) for f in by_category(found, CAT_UNUSED)}
+    # Names are compared case-sensitively: 'gopher' is not the factory 'GOPHER'.
+    assert own == {("Adresse", "net-own-unused"), ("Dienst", "svc-own-unused"), ("Dienst", "gopher")}
+
+
+def test_used_factory_objects_are_not_reported():
+    found = findings_for("res_factory_objects.conf")
+    refs = {f.ref for f in found if f.category in (CAT_UNUSED, CAT_UNUSED_FACTORY)}
+    assert "HTTPS" not in refs  # used by policy 1 and by 'Web Access'
+    assert "all" not in {f.ref for f in found if f.object_kind == "Adresse"}  # IPv4 'all' is used
+    assert "gmail.com" not in refs  # member of the factory group 'G Suite'
+
+
+def test_factory_finding_says_it_is_a_factory_object():
+    found = findings_for("res_factory_objects.conf")
+    hit = next(f for f in by_category(found, CAT_UNUSED_FACTORY) if f.ref == "QUAKE")
+    assert "werkseitig" in hit.detail
+
+
+def test_factory_list_is_kept_per_object_kind():
+    from fortidoc.model.defaults import FACTORY_OBJECTS
+
+    assert "QUAKE" in FACTORY_OBJECTS["firewall service custom"]
+    assert "gmail.com" in FACTORY_OBJECTS["firewall address"]
+    assert "QUAKE" not in FACTORY_OBJECTS["firewall address"]
+
+
+def test_count_by_category_lists_every_check_in_fixed_order():
+    found = findings_for("res_findings.conf")
+    counts = count_by_category(found)
+    assert list(counts) == CATEGORIES
+    assert sum(counts.values()) == len(found)
+    assert counts[CAT_DISABLED] == 1
+    assert counts[CAT_UNUSED_FACTORY] == 0
