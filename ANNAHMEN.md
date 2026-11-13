@@ -5,7 +5,7 @@ das nicht durch eine echte Konfiguration oder Dokumentation abgesichert ist.
 Im Code sind diese Stellen mit `ASSUMPTION(<Kennung>)` markiert.
 Bitte bei Gelegenheit gegen echte Backups prüfen und hier abhaken.
 
-Stand: Stufe 1 (Parser)
+Stand: Stufe 2 (Datenmodell und Resolver)
 
 ## Tokenizer
 
@@ -25,7 +25,7 @@ Stand: Stufe 1 (Parser)
 | P1 | Backups enthalten nur `config`, `edit`, `set`, `unset`, `next`, `end`. Andere Befehle (`append`, `select`, `unselect`, `clear`, `purge`, `rename`, `move` …) gelten als Syntaxfehler. | Ein Backup mit einem solchen Befehl bricht ab, statt eingelesen zu werden. |
 | P2 | `end` bei offenem `edit` schließt das `edit` und den umgebenden `config`-Block. | – (so in der Aufgabenstellung beschrieben) |
 | P3 | `edit` hat genau einen Namen bzw. eine ID. | Ein `edit` mit mehreren Argumenten bricht ab. |
-| P4 | Ein Schlüssel kann im selben Block mehrfach vorkommen. Der Parser behält alle Vorkommen in Dateireihenfolge, die Bewertung (vermutlich „letzter gewinnt“) folgt erst in Stufe 2. | – |
+| P4 | Ein Schlüssel kann im selben Block mehrfach vorkommen. Der Parser behält alle Vorkommen in Dateireihenfolge. Der Resolver wertet „letzter gewinnt“ aus; `unset` entfernt den Wert, danach gilt der Default. | Bei doppelten Schlüsseln würde der falsche Wert gezeigt. |
 | P5 | `config` darf direkt in `config` stehen (ohne `edit`). Wird generisch akzeptiert. | – |
 | P6 | Ein beim Dateiende offener Block ist ein Fehler (abgeschnittene Datei). | Ein Backup ohne abschließendes `end` bricht ab. |
 
@@ -43,7 +43,7 @@ Stand: Stufe 1 (Parser)
 | Kennung | Annahme | Folge, wenn falsch |
 |---|---|---|
 | V1 | Ein Multi-VDOM-Backup hat auf oberster Ebene `config vdom` und/oder `config global`. Die Deklaration ist ein `edit <vdom>` ohne Inhalt, danach folgt je VDOM ein `config vdom` / `edit <vdom>`-Block mit Inhalt. Mehrere Blöcke desselben VDOMs werden in Dateireihenfolge zusammengeführt. | – |
-| V2 | Ohne VDOMs gehören alle Abschnitte zum VDOM `root`. Der Parser trennt dabei nicht zwischen globalen und VDOM-Abschnitten, weil er keine Abschnittsnamen kennt. Ob z. B. `system interface` dann global ist, entscheidet Stufe 2. | – |
+| V2 | Ohne VDOMs gehören alle Abschnitte zum VDOM `root`. Der Parser trennt nicht zwischen globalen und VDOM-Abschnitten. **Entschieden (Toni):** Die VDOM-Zuordnung eines Interfaces kommt aus `set vdom` am Interface, nicht aus der Position in der Datei. | – |
 | V3 | Andere Abschnitte auf oberster Ebene eines Multi-VDOM-Backups werden nicht verworfen, sondern unter `outside_sections` mit Hinweis geführt. | – |
 
 ## Eingabedatei
@@ -61,3 +61,36 @@ Stand: Stufe 1 (Parser)
 | S1 | Geheim sind: jeder Wert, der mit `ENC` beginnt; jeder Wert mit `-----BEGIN`; alle Schlüssel, deren Name `password`, `passwd`, `passphrase`, `psk`, `secret`, `private-key`, `privkey`, `keytab` oder `pwd` enthält; alle Schlüssel mit einem Namensteil, der auf `key` oder `keys` endet (`key`, `authkey`, `md5-keys`, `key-string`). Die Werte werden beim Einlesen durch `***entfernt***` ersetzt, der Schlüssel bleibt sichtbar. | Zu viel geschwärzt: harmlose Werte wie ein fiktives `some-key` fehlen in der Doku. Zu wenig geschwärzt wäre ein Leck, deshalb sind die Regeln bewusst breit. |
 | S3 | Zusätzlich zu den Namensregeln gibt es Pfad-Regeln: `set name` unter `config system snmp community` ist der Community-String im Klartext und wird geschwärzt (Vorgabe Toni). Der Pfad wird ohne `config global`/`config vdom` verglichen und muss genau passen. | Weitere Klartext-Geheimnisse an anderer Stelle wären nur über neue Pfad-Regeln abgedeckt. |
 | S2 | Fehlermeldungen zeigen die betroffene Zeile nur geschwärzt und gekürzt. Bei einem unbekannten Befehl erscheint der Befehl selbst (max. 40 Zeichen). Ein Geheimnis, das ohne Schlüssel und ohne `ENC` als eigene Zeile im Backup stünde, ließe sich nicht erkennen. | – |
+
+## Defaults (Stufe 2, zentral in `src/fortidoc/model/defaults.py`)
+
+`action deny` und `status enable` bei Policies sind durch die Aufgabenstellung
+vorgegeben. Alle anderen Defaults sind Annahmen.
+
+| Kennung | Annahme | Folge, wenn falsch |
+|---|---|---|
+| D1 | Policy: `nat`, `ippool`, `srcaddr-negate`, `dstaddr-negate`, `service-negate`, `internet-service`, `internet-service-src`, `utm-status` sind ohne Eintrag `disable`. | NAT, Negation oder Internet Service würden falsch angezeigt. |
+| D2 | Policy: `logtraffic` ist ohne Eintrag `utm` (nur Sicherheitsereignisse). | Die Logging-Spalte und später die Auffälligkeit „ACCEPT ohne Logging“ wären falsch. |
+| D3 | Adresse: `type` ist ohne Eintrag `ipmask`, `subnet` ist `0.0.0.0 0.0.0.0` (so steht `all` im Backup). | Adressen ohne Typ würden falsch aufgelöst. |
+| D4 | IPv6-Adresse: `type` ist `ipprefix`, `ip6` ist `::/0`. | wie D3 für IPv6 |
+| D5 | Adressgruppe: `exclude` ist `disable`. Ist `exclude-member` gesetzt, aber `exclude` nicht aktiviert, wird der Ausschluss nicht angewendet und als Hinweis gezeigt. | Ausschlüsse würden fälschlich ignoriert. |
+| D6 | Dienst: `protocol` ist `TCP/UDP/SCTP`. Bei `protocol IP` bedeutet fehlende oder `0` als `protocol-number` „alle IP-Protokolle“ (so ist `ALL` definiert). | Dienste ohne Protokoll würden falsch aufgelöst. |
+| D7 | VIP: `type static-nat`, `extintf any`, `portforward disable`, `protocol tcp`. | Externe Seite der VIP falsch dargestellt. |
+| D8 | IP-Pool: `type overload`. | Pool-Typ falsch angezeigt. |
+| D9 | Central-SNAT: `status enable`, `nat enable`. Ohne `nat-ippool` wird auf die Adresse des Ausgangs-Interfaces übersetzt. | SNAT-Tabelle falsch. |
+| D10 | `system settings`: `central-nat disable`, `opmode nat`. | Central NAT würde nicht erkannt. |
+| D11 | Zone: `intrazone deny`. | Nur Anzeige. |
+| D12 | Interface ohne `set vdom` gehört zu `root` (mit Hinweis am Interface). | Interface im falschen VDOM, falsche Hinweise in Regeln. |
+| D13 | SD-WAN-Mitglied ohne `set zone` gehört zur Zone `virtual-wan-link`. | Interface in falscher Zone. |
+| D14 | Die implizite Deny-Regel trägt die ID 0. | Nur Anzeige. |
+
+## Auflösung (Stufe 2)
+
+| Kennung | Annahme | Folge, wenn falsch |
+|---|---|---|
+| A1 | Eine Adresse mit gesetzten Hostbits (`10.0.1.5 255.255.255.0`) steht für das ganze Netz (`10.0.1.0/24`). Das wird als Hinweis am Wert gezeigt. | Der Wert wäre zu weit gefasst. |
+| A2 | Ein Interface ohne `type`, aber mit `vlanid`, ist ein VLAN. Ohne beides bleibt der Typ „nicht gesetzt“. | Typ falsch angezeigt. |
+| A3 | Bei Wildcard-Adressen sind gesetzte Bits in der Maske die verglichenen Bits (wie bei einer Netzmaske, nicht invertiert wie bei Cisco). Eine zusammenhängende Maske wird als Netz gezeigt, sonst „nicht auflösbar“. | Wildcard-Netze wären falsch. |
+| A4 | Objektnamen werden in dieser Reihenfolge gesucht: `firewall address`, `addrgrp`, `vip`, `vipgrp` (IPv6: `address6`, `addrgrp6`). `vip6` wird nicht ausgewertet; ein Verweis darauf erscheint als „nicht gefunden“. | Bei doppelten Namen würde das falsche Objekt genommen. |
+| A5 | Bei Central NAT gibt eine Regel einen Hinweis auf eine VIP, wenn die VIP auf ein Ziel der Regel übersetzt (Überlappung mit `mappedip`, ohne `0.0.0.0/0`) und das `extintf` der VIP zu einem Quell-Interface der Regel passt oder `any` ist. | Hinweise fehlen oder sind zu viel. |
+| A6 | Ohne `ippool enable` übersetzt eine Policy mit `nat enable` auf die Adresse des Ausgangs-Interfaces. | NAT-Spalte falsch. |

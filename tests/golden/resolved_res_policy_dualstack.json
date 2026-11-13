@@ -1,0 +1,590 @@
+{
+  "device": {
+    "model": "FGT60F",
+    "version": "7.2.5",
+    "build": "1517",
+    "firmware_type": "FW",
+    "vdom_mode": "no-vdom",
+    "input_name": "res_policy_dualstack.conf",
+    "input_sha256": "c6697d2db6430e74abd21674095d046676e870ccdc1e9ce37a5effca51f3d46c",
+    "input_size_bytes": 1245
+  },
+  "interfaces": [
+    {
+      "name": "wan1",
+      "vdom": "root",
+      "type": "physical",
+      "type_label": "physisch",
+      "ip": "203.0.113.1/24",
+      "vlan_id": null,
+      "parent": null,
+      "members": [],
+      "zone": "wan1",
+      "alias": null,
+      "description": null,
+      "status": null,
+      "notes": [],
+      "defaults_applied": [],
+      "unknown_keys": {}
+    },
+    {
+      "name": "internal",
+      "vdom": "root",
+      "type": "physical",
+      "type_label": "physisch",
+      "ip": "10.10.10.1/24",
+      "vlan_id": null,
+      "parent": null,
+      "members": [],
+      "zone": "internal",
+      "alias": null,
+      "description": null,
+      "status": null,
+      "notes": [],
+      "defaults_applied": [],
+      "unknown_keys": {}
+    }
+  ],
+  "vdoms": [
+    {
+      "name": "root",
+      "central_nat": false,
+      "opmode": "nat",
+      "notes": [],
+      "zones": [
+        {
+          "name": "wan1",
+          "vdom": "root",
+          "kind": "interface",
+          "interfaces": [
+            "wan1"
+          ],
+          "intrazone": null
+        },
+        {
+          "name": "internal",
+          "vdom": "root",
+          "kind": "interface",
+          "interfaces": [
+            "internal"
+          ],
+          "intrazone": null
+        }
+      ],
+      "policies": [
+        {
+          "vdom": "root",
+          "section": "firewall policy",
+          "position": 1,
+          "policy_id": "1",
+          "implicit": false,
+          "name": "dual-stack",
+          "uuid": null,
+          "status": "enable",
+          "enabled": true,
+          "action": "accept",
+          "ip_version": "4+6",
+          "src_interfaces": [
+            {
+              "name": "internal",
+              "kind": "interface",
+              "zone": "internal",
+              "vdom": "root"
+            }
+          ],
+          "dst_interfaces": [
+            {
+              "name": "wan1",
+              "kind": "interface",
+              "zone": "wan1",
+              "vdom": "root"
+            }
+          ],
+          "src_zones": [
+            "internal"
+          ],
+          "dst_zones": [
+            "wan1"
+          ],
+          "source": {
+            "objects": [
+              "net-lan"
+            ],
+            "objects6": [
+              "v6-lan"
+            ],
+            "negate": false,
+            "internet_services": [],
+            "values": [
+              {
+                "kind": "network",
+                "value": "10.10.10.0/24",
+                "ip_version": 4,
+                "origin": [
+                  "net-lan"
+                ],
+                "note": null,
+                "vip": null
+              },
+              {
+                "kind": "network",
+                "value": "2001:db8:10::/64",
+                "ip_version": 6,
+                "origin": [
+                  "v6-lan"
+                ],
+                "note": null,
+                "vip": null
+              }
+            ]
+          },
+          "destination": {
+            "objects": [
+              "all"
+            ],
+            "objects6": [
+              "all"
+            ],
+            "negate": false,
+            "internet_services": [],
+            "values": [
+              {
+                "kind": "network",
+                "value": "0.0.0.0/0",
+                "ip_version": 4,
+                "origin": [
+                  "all"
+                ],
+                "note": null,
+                "vip": null
+              },
+              {
+                "kind": "network",
+                "value": "::/0",
+                "ip_version": 6,
+                "origin": [
+                  "all"
+                ],
+                "note": null,
+                "vip": null
+              }
+            ]
+          },
+          "service": {
+            "objects": [
+              "HTTPS"
+            ],
+            "negate": false,
+            "entries": [
+              {
+                "kind": "ports",
+                "protocol": "TCP",
+                "value": "TCP/443",
+                "dst_ports": "443",
+                "src_ports": null,
+                "icmp_type": null,
+                "icmp_code": null,
+                "protocol_number": null,
+                "origin": [
+                  "HTTPS"
+                ],
+                "note": null
+              }
+            ]
+          },
+          "nat": {
+            "enabled": false,
+            "ippool": false,
+            "pools": [],
+            "mode": "none"
+          },
+          "users": [],
+          "groups": [],
+          "schedule": "always",
+          "logtraffic": "utm",
+          "profiles": {},
+          "comments": null,
+          "line": 34,
+          "notes": [],
+          "defaults_applied": [
+            "srcaddr-negate",
+            "internet-service-src",
+            "dstaddr-negate",
+            "internet-service",
+            "service-negate",
+            "nat",
+            "status",
+            "logtraffic"
+          ],
+          "unknown_keys": {}
+        },
+        {
+          "vdom": "root",
+          "section": "firewall policy",
+          "position": 2,
+          "policy_id": "2",
+          "implicit": false,
+          "name": "v6-only",
+          "uuid": null,
+          "status": "enable",
+          "enabled": true,
+          "action": "accept",
+          "ip_version": "6",
+          "src_interfaces": [
+            {
+              "name": "internal",
+              "kind": "interface",
+              "zone": "internal",
+              "vdom": "root"
+            }
+          ],
+          "dst_interfaces": [
+            {
+              "name": "wan1",
+              "kind": "interface",
+              "zone": "wan1",
+              "vdom": "root"
+            }
+          ],
+          "src_zones": [
+            "internal"
+          ],
+          "dst_zones": [
+            "wan1"
+          ],
+          "source": {
+            "objects": [],
+            "objects6": [
+              "v6-lan"
+            ],
+            "negate": false,
+            "internet_services": [],
+            "values": [
+              {
+                "kind": "network",
+                "value": "2001:db8:10::/64",
+                "ip_version": 6,
+                "origin": [
+                  "v6-lan"
+                ],
+                "note": null,
+                "vip": null
+              }
+            ]
+          },
+          "destination": {
+            "objects": [],
+            "objects6": [
+              "all"
+            ],
+            "negate": false,
+            "internet_services": [],
+            "values": [
+              {
+                "kind": "network",
+                "value": "::/0",
+                "ip_version": 6,
+                "origin": [
+                  "all"
+                ],
+                "note": null,
+                "vip": null
+              }
+            ]
+          },
+          "service": {
+            "objects": [
+              "HTTPS"
+            ],
+            "negate": false,
+            "entries": [
+              {
+                "kind": "ports",
+                "protocol": "TCP",
+                "value": "TCP/443",
+                "dst_ports": "443",
+                "src_ports": null,
+                "icmp_type": null,
+                "icmp_code": null,
+                "protocol_number": null,
+                "origin": [
+                  "HTTPS"
+                ],
+                "note": null
+              }
+            ]
+          },
+          "nat": {
+            "enabled": false,
+            "ippool": false,
+            "pools": [],
+            "mode": "none"
+          },
+          "users": [],
+          "groups": [],
+          "schedule": "always",
+          "logtraffic": "utm",
+          "profiles": {},
+          "comments": null,
+          "line": 46,
+          "notes": [],
+          "defaults_applied": [
+            "srcaddr-negate",
+            "internet-service-src",
+            "dstaddr-negate",
+            "internet-service",
+            "service-negate",
+            "nat",
+            "status",
+            "logtraffic"
+          ],
+          "unknown_keys": {}
+        },
+        {
+          "vdom": "root",
+          "section": "implicit",
+          "position": 3,
+          "policy_id": "0",
+          "implicit": true,
+          "name": "Implizites Deny",
+          "uuid": null,
+          "status": "enable",
+          "enabled": true,
+          "action": "deny",
+          "ip_version": "4+6",
+          "src_interfaces": [
+            {
+              "name": "any",
+              "kind": "any",
+              "zone": "any",
+              "vdom": null
+            }
+          ],
+          "dst_interfaces": [
+            {
+              "name": "any",
+              "kind": "any",
+              "zone": "any",
+              "vdom": null
+            }
+          ],
+          "src_zones": [
+            "any"
+          ],
+          "dst_zones": [
+            "any"
+          ],
+          "source": {
+            "objects": [],
+            "objects6": [],
+            "negate": false,
+            "internet_services": [],
+            "values": [
+              {
+                "kind": "network",
+                "value": "0.0.0.0/0",
+                "ip_version": 4,
+                "origin": [],
+                "note": null,
+                "vip": null
+              },
+              {
+                "kind": "network",
+                "value": "::/0",
+                "ip_version": 6,
+                "origin": [],
+                "note": null,
+                "vip": null
+              }
+            ]
+          },
+          "destination": {
+            "objects": [],
+            "objects6": [],
+            "negate": false,
+            "internet_services": [],
+            "values": [
+              {
+                "kind": "network",
+                "value": "0.0.0.0/0",
+                "ip_version": 4,
+                "origin": [],
+                "note": null,
+                "vip": null
+              },
+              {
+                "kind": "network",
+                "value": "::/0",
+                "ip_version": 6,
+                "origin": [],
+                "note": null,
+                "vip": null
+              }
+            ]
+          },
+          "service": {
+            "objects": [],
+            "negate": false,
+            "entries": [
+              {
+                "kind": "ip",
+                "protocol": "IP",
+                "value": "IP alle Protokolle",
+                "dst_ports": null,
+                "src_ports": null,
+                "icmp_type": null,
+                "icmp_code": null,
+                "protocol_number": 0,
+                "origin": [],
+                "note": null
+              }
+            ]
+          },
+          "nat": {
+            "enabled": false,
+            "ippool": false,
+            "pools": [],
+            "mode": "none"
+          },
+          "users": [],
+          "groups": [],
+          "schedule": null,
+          "logtraffic": null,
+          "profiles": {},
+          "comments": null,
+          "line": null,
+          "notes": [
+            "Implizite Regel am Ende des VDOMs: Verkehr, den keine Regel davor erlaubt, wird verworfen."
+          ],
+          "defaults_applied": [],
+          "unknown_keys": {}
+        }
+      ],
+      "addresses": [
+        {
+          "name": "all",
+          "vdom": "root",
+          "category": "address",
+          "type": "ipmask",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "network",
+              "value": "0.0.0.0/0",
+              "ip_version": 4,
+              "origin": [
+                "all"
+              ],
+              "note": null,
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "net-lan",
+          "vdom": "root",
+          "category": "address",
+          "type": "ipmask",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "network",
+              "value": "10.10.10.0/24",
+              "ip_version": 4,
+              "origin": [
+                "net-lan"
+              ],
+              "note": null,
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "all",
+          "vdom": "root",
+          "category": "address6",
+          "type": "ipprefix",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "network",
+              "value": "::/0",
+              "ip_version": 6,
+              "origin": [
+                "all"
+              ],
+              "note": null,
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "v6-lan",
+          "vdom": "root",
+          "category": "address6",
+          "type": "ipprefix",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "network",
+              "value": "2001:db8:10::/64",
+              "ip_version": 6,
+              "origin": [
+                "v6-lan"
+              ],
+              "note": null,
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        }
+      ],
+      "services": [
+        {
+          "name": "HTTPS",
+          "vdom": "root",
+          "category": "custom",
+          "protocol": "TCP/UDP/SCTP",
+          "members": [],
+          "entries": [
+            {
+              "kind": "ports",
+              "protocol": "TCP",
+              "value": "TCP/443",
+              "dst_ports": "443",
+              "src_ports": null,
+              "icmp_type": null,
+              "icmp_code": null,
+              "protocol_number": null,
+              "origin": [
+                "HTTPS"
+              ],
+              "note": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        }
+      ],
+      "vips": [],
+      "ippools": [],
+      "snat": []
+    }
+  ],
+  "coverage": {
+    "unprocessed_sections": [],
+    "unknown_keys": []
+  },
+  "notes": []
+}

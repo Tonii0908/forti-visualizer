@@ -27,3 +27,19 @@ def test_parse_tree_matches_golden(name):
         golden.write_text(actual, encoding="utf-8")
     assert golden.exists(), f"golden file missing: {golden.name} (run with FORTIDOC_UPDATE_GOLDEN=1)"
     assert actual == golden.read_text(encoding="utf-8")
+
+
+RESOLVE_CASES = sorted(p.stem for p in FIXTURES.glob("res_*.conf"))
+
+
+@pytest.mark.parametrize("name", RESOLVE_CASES)
+def test_resolved_model_matches_golden(name):
+    from fortidoc.core.resolver import resolve_config
+
+    resolved = resolve_config(parse_file(FIXTURES / f"{name}.conf"))
+    actual = json.dumps(resolved.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n"
+    golden = GOLDEN / f"resolved_{name}.json"
+    if os.environ.get("FORTIDOC_UPDATE_GOLDEN"):
+        golden.write_text(actual, encoding="utf-8")
+    assert golden.exists(), f"golden file missing: {golden.name} (run with FORTIDOC_UPDATE_GOLDEN=1)"
+    assert actual == golden.read_text(encoding="utf-8")

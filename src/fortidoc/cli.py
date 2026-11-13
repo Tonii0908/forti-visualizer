@@ -12,7 +12,9 @@ from typing import Annotated, Optional
 import typer
 
 from fortidoc import __version__
+from fortidoc.core.resolver import resolve_config
 from fortidoc.errors import FortidocError
+from fortidoc.model.schema import AddressSide, ResolvedConfig, ResolvedPolicy
 from fortidoc.parser.conf_parser import ConfigNode, ConfigTree, EditNode, iter_nodes, parse_file
 
 CONFIDENTIAL_NOTICE = (
@@ -92,6 +94,94 @@ def parse_command(
         typer.echo(json.dumps(payload, ensure_ascii=False, indent=2))
     else:
         typer.echo(_summary(tree))
+
+
+@app.command("resolve")
+def resolve_command(
+    file: Annotated[Path, typer.Argument(help="FortiGate-Backup (.conf, unverschlüsselt).")],
+    as_json: Annotated[bool, typer.Option("--json", help="Aufgelöstes Modell als JSON ausgeben.")] = False,
+) -> None:
+    """Backup einlesen und das Regelwerk mit allen Objektverweisen auflösen."""
+    try:
+        tree = parse_file(file)
+    except FortidocError as exc:
+        typer.echo(f"Fehler: {exc}", err=True)
+        raise typer.Exit(1) from None
+    resolved = resolve_config(tree)
+    if as_json:
+        payload = {"meta": _meta(tree), "resolved": resolved.model_dump(mode="json")}
+        typer.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        typer.echo(_resolved_summary(tree, resolved))
+
+
+_NAT_LABELS = {
+    "none": "kein NAT",
+    "interface": "Adresse des Ausgangs-Interfaces",
+    "pool": "IP-Pool",
+    "central": "Central NAT (siehe NAT-Tabellen)",
+}
+
+
+def _side_text(side: AddressSide) -> str:
+    names = side.objects + side.objects6 + side.internet_services
+    values = ", ".join(v.value + (" (nicht auflösbar)" if v.kind == "unresolvable" else "") for v in side.values)
+    text = f"{', '.join(names) or '-'} = {values or '-'}"
+    return f"alles außer: {text}" if side.negate else text
+
+
+def _policy_lines(p: ResolvedPolicy) -> list[str]:
+    state = "aktiv" if p.enabled else "deaktiviert"
+    title = f"  [{p.position}] ID {p.policy_id}"
+    if p.name:
+        title += f' "{p.name}"'
+    title += f" {p.action} ({state}, IPv{p.ip_version})"
+    if p.section == "firewall policy6":
+        title += " [policy6]"
+    service = ", ".join(e.value for e in p.service.entries) or "-"
+    service_text = f"{', '.join(p.service.objects) or '-'} = {service}"
+    if p.service.negate:
+        service_text = f"alles außer: {service_text}"
+    lines = [
+        title,
+        f"      Zonen: {', '.join(p.src_zones) or '-'} → {', '.join(p.dst_zones) or '-'}",
+        f"      Quelle: {_side_text(p.source)}",
+        f"      Ziel: {_side_text(p.destination)}",
+        f"      Dienst: {service_text}",
+    ]
+    if not p.implicit:
+        nat = _NAT_LABELS[p.nat.mode]
+        if p.nat.pools:
+            nat += ": " + ", ".join(pool.value for pool in p.nat.pools)
+        lines.append(f"      NAT: {nat}")
+    lines.extend(f"      Hinweis: {note}" for note in p.notes)
+    return lines
+
+
+def _resolved_summary(tree: ConfigTree, resolved: ResolvedConfig) -> str:
+    meta = _meta(tree)
+    d = resolved.device
+    lines = [
+        f"Datei: {meta['input_file']}",
+        f"SHA-256: {meta['input_sha256']}",
+        f"Tool-Version: fortidoc {__version__}",
+        f"Erstellt: {meta['created_at']}",
+        f"Gerät: {d.model or 'unbekannt'}, FortiOS {d.version or 'unbekannt'}",
+    ]
+    for vdom in resolved.vdoms:
+        lines.append("")
+        lines.append(f"VDOM {vdom.name}: {len(vdom.policies)} Regeln (inkl. implizitem Deny)")
+        lines.extend(f"  Hinweis: {note}" for note in vdom.notes)
+        for policy in vdom.policies:
+            lines.extend(_policy_lines(policy))
+    coverage = resolved.coverage
+    lines.append("")
+    lines.append(
+        f"Nicht verarbeitet: {len(coverage.unprocessed_sections)} Abschnitte, "
+        f"{len(coverage.unknown_keys)} unbekannte Schlüssel in ausgewerteten Abschnitten"
+    )
+    lines.extend(f"Hinweis: {note}" for note in resolved.notes)
+    return "\n".join(lines)
 
 
 def _meta(tree: ConfigTree) -> dict:

@@ -1,0 +1,887 @@
+{
+  "device": {
+    "model": "FGT60F",
+    "version": "7.2.5",
+    "build": "1517",
+    "firmware_type": "FW",
+    "vdom_mode": "no-vdom",
+    "input_name": "res_address_types.conf",
+    "input_sha256": "ad77346b29955cbbb94068b391af76f2ed585a72bf0dfd1d0c5425c6c81a8bf0",
+    "input_size_bytes": 2547
+  },
+  "interfaces": [
+    {
+      "name": "port1",
+      "vdom": "root",
+      "type": "physical",
+      "type_label": "physisch",
+      "ip": "10.0.1.1/24",
+      "vlan_id": null,
+      "parent": null,
+      "members": [],
+      "zone": "port1",
+      "alias": null,
+      "description": null,
+      "status": null,
+      "notes": [],
+      "defaults_applied": [],
+      "unknown_keys": {}
+    },
+    {
+      "name": "port2",
+      "vdom": "root",
+      "type": "physical",
+      "type_label": "physisch",
+      "ip": "10.0.2.1/24",
+      "vlan_id": null,
+      "parent": null,
+      "members": [],
+      "zone": "port2",
+      "alias": null,
+      "description": null,
+      "status": null,
+      "notes": [],
+      "defaults_applied": [],
+      "unknown_keys": {}
+    },
+    {
+      "name": "wan1",
+      "vdom": "root",
+      "type": "physical",
+      "type_label": "physisch",
+      "ip": "203.0.113.1/24",
+      "vlan_id": null,
+      "parent": null,
+      "members": [],
+      "zone": "wan1",
+      "alias": null,
+      "description": null,
+      "status": null,
+      "notes": [],
+      "defaults_applied": [],
+      "unknown_keys": {}
+    }
+  ],
+  "vdoms": [
+    {
+      "name": "root",
+      "central_nat": false,
+      "opmode": "nat",
+      "notes": [],
+      "zones": [
+        {
+          "name": "port1",
+          "vdom": "root",
+          "kind": "interface",
+          "interfaces": [
+            "port1"
+          ],
+          "intrazone": null
+        },
+        {
+          "name": "port2",
+          "vdom": "root",
+          "kind": "interface",
+          "interfaces": [
+            "port2"
+          ],
+          "intrazone": null
+        },
+        {
+          "name": "wan1",
+          "vdom": "root",
+          "kind": "interface",
+          "interfaces": [
+            "wan1"
+          ],
+          "intrazone": null
+        }
+      ],
+      "policies": [
+        {
+          "vdom": "root",
+          "section": "firewall policy",
+          "position": 1,
+          "policy_id": "1",
+          "implicit": false,
+          "name": "types-a",
+          "uuid": null,
+          "status": "enable",
+          "enabled": true,
+          "action": "accept",
+          "ip_version": "4",
+          "src_interfaces": [
+            {
+              "name": "port1",
+              "kind": "interface",
+              "zone": "port1",
+              "vdom": "root"
+            }
+          ],
+          "dst_interfaces": [
+            {
+              "name": "port2",
+              "kind": "interface",
+              "zone": "port2",
+              "vdom": "root"
+            }
+          ],
+          "src_zones": [
+            "port1"
+          ],
+          "dst_zones": [
+            "port2"
+          ],
+          "source": {
+            "objects": [
+              "a-ipmask",
+              "a-hostbits",
+              "a-iprange",
+              "a-wildcard-contiguous",
+              "a-wildcard"
+            ],
+            "objects6": [],
+            "negate": false,
+            "internet_services": [],
+            "values": [
+              {
+                "kind": "network",
+                "value": "10.0.1.0/24",
+                "ip_version": 4,
+                "origin": [
+                  "a-ipmask"
+                ],
+                "note": null,
+                "vip": null
+              },
+              {
+                "kind": "network",
+                "value": "10.0.1.0/24",
+                "ip_version": 4,
+                "origin": [
+                  "a-hostbits"
+                ],
+                "note": "Hostbits gesetzt (10.0.1.5/24); als Netz 10.0.1.0/24 ausgewertet.",
+                "vip": null
+              },
+              {
+                "kind": "range",
+                "value": "10.0.9.1-10.0.9.50",
+                "ip_version": 4,
+                "origin": [
+                  "a-iprange"
+                ],
+                "note": null,
+                "vip": null
+              },
+              {
+                "kind": "network",
+                "value": "10.8.0.0/16",
+                "ip_version": 4,
+                "origin": [
+                  "a-wildcard-contiguous"
+                ],
+                "note": "Wildcard mit zusammenhängender Maske, als Netz dargestellt.",
+                "vip": null
+              },
+              {
+                "kind": "unresolvable",
+                "value": "10.0.0.5/255.0.255.255",
+                "ip_version": 4,
+                "origin": [
+                  "a-wildcard"
+                ],
+                "note": "Wildcard-Maske ist nicht zusammenhängend und lässt sich nicht als Netz oder Bereich darstellen.",
+                "vip": null
+              }
+            ]
+          },
+          "destination": {
+            "objects": [
+              "a-fqdn",
+              "a-geo",
+              "a-dynamic",
+              "a-ifsubnet",
+              "a-ifsubnet-unknown",
+              "a-mac",
+              "a-future-type"
+            ],
+            "objects6": [],
+            "negate": false,
+            "internet_services": [],
+            "values": [
+              {
+                "kind": "fqdn",
+                "value": "www.example.com",
+                "ip_version": 4,
+                "origin": [
+                  "a-fqdn"
+                ],
+                "note": null,
+                "vip": null
+              },
+              {
+                "kind": "unresolvable",
+                "value": "DE",
+                "ip_version": 4,
+                "origin": [
+                  "a-geo"
+                ],
+                "note": "Geo-Adresse (Land DE): Die Zuordnung zu IP-Adressen liegt nur in der Datenbank auf dem Gerät.",
+                "vip": null
+              },
+              {
+                "kind": "unresolvable",
+                "value": "a-dynamic",
+                "ip_version": 4,
+                "origin": [
+                  "a-dynamic"
+                ],
+                "note": "Dynamische Adresse (sub-type sdn, sdn cloud-connector, filter Tag.env=prod) wird erst auf dem Gerät aufgelöst.",
+                "vip": null
+              },
+              {
+                "kind": "network",
+                "value": "10.0.2.0/24",
+                "ip_version": 4,
+                "origin": [
+                  "a-ifsubnet"
+                ],
+                "note": "Netz des Interfaces port2.",
+                "vip": null
+              },
+              {
+                "kind": "unresolvable",
+                "value": "a-ifsubnet-unknown",
+                "ip_version": 4,
+                "origin": [
+                  "a-ifsubnet-unknown"
+                ],
+                "note": "Interface 'no-such-port' nicht gefunden oder ohne IP-Adresse.",
+                "vip": null
+              },
+              {
+                "kind": "unresolvable",
+                "value": "00:11:22:33:44:55",
+                "ip_version": 4,
+                "origin": [
+                  "a-mac"
+                ],
+                "note": "MAC-Adresse: kein IP-Wert, die Zuordnung erfolgt auf dem Gerät.",
+                "vip": null
+              },
+              {
+                "kind": "unresolvable",
+                "value": "a-future-type",
+                "ip_version": 4,
+                "origin": [
+                  "a-future-type"
+                ],
+                "note": "Unbekannter Adresstyp 'something-new'.",
+                "vip": null
+              }
+            ]
+          },
+          "service": {
+            "objects": [
+              "ALL"
+            ],
+            "negate": false,
+            "entries": [
+              {
+                "kind": "ip",
+                "protocol": "IP",
+                "value": "IP alle Protokolle",
+                "dst_ports": null,
+                "src_ports": null,
+                "icmp_type": null,
+                "icmp_code": null,
+                "protocol_number": 0,
+                "origin": [
+                  "ALL"
+                ],
+                "note": null
+              }
+            ]
+          },
+          "nat": {
+            "enabled": false,
+            "ippool": false,
+            "pools": [],
+            "mode": "none"
+          },
+          "users": [],
+          "groups": [],
+          "schedule": "always",
+          "logtraffic": "utm",
+          "profiles": {},
+          "comments": null,
+          "line": 98,
+          "notes": [],
+          "defaults_applied": [
+            "srcaddr-negate",
+            "internet-service-src",
+            "dstaddr-negate",
+            "internet-service",
+            "service-negate",
+            "nat",
+            "status",
+            "logtraffic"
+          ],
+          "unknown_keys": {}
+        },
+        {
+          "vdom": "root",
+          "section": "implicit",
+          "position": 2,
+          "policy_id": "0",
+          "implicit": true,
+          "name": "Implizites Deny",
+          "uuid": null,
+          "status": "enable",
+          "enabled": true,
+          "action": "deny",
+          "ip_version": "4",
+          "src_interfaces": [
+            {
+              "name": "any",
+              "kind": "any",
+              "zone": "any",
+              "vdom": null
+            }
+          ],
+          "dst_interfaces": [
+            {
+              "name": "any",
+              "kind": "any",
+              "zone": "any",
+              "vdom": null
+            }
+          ],
+          "src_zones": [
+            "any"
+          ],
+          "dst_zones": [
+            "any"
+          ],
+          "source": {
+            "objects": [],
+            "objects6": [],
+            "negate": false,
+            "internet_services": [],
+            "values": [
+              {
+                "kind": "network",
+                "value": "0.0.0.0/0",
+                "ip_version": 4,
+                "origin": [],
+                "note": null,
+                "vip": null
+              }
+            ]
+          },
+          "destination": {
+            "objects": [],
+            "objects6": [],
+            "negate": false,
+            "internet_services": [],
+            "values": [
+              {
+                "kind": "network",
+                "value": "0.0.0.0/0",
+                "ip_version": 4,
+                "origin": [],
+                "note": null,
+                "vip": null
+              }
+            ]
+          },
+          "service": {
+            "objects": [],
+            "negate": false,
+            "entries": [
+              {
+                "kind": "ip",
+                "protocol": "IP",
+                "value": "IP alle Protokolle",
+                "dst_ports": null,
+                "src_ports": null,
+                "icmp_type": null,
+                "icmp_code": null,
+                "protocol_number": 0,
+                "origin": [],
+                "note": null
+              }
+            ]
+          },
+          "nat": {
+            "enabled": false,
+            "ippool": false,
+            "pools": [],
+            "mode": "none"
+          },
+          "users": [],
+          "groups": [],
+          "schedule": null,
+          "logtraffic": null,
+          "profiles": {},
+          "comments": null,
+          "line": null,
+          "notes": [
+            "Implizite Regel am Ende des VDOMs: Verkehr, den keine Regel davor erlaubt, wird verworfen."
+          ],
+          "defaults_applied": [],
+          "unknown_keys": {}
+        }
+      ],
+      "addresses": [
+        {
+          "name": "all",
+          "vdom": "root",
+          "category": "address",
+          "type": "ipmask",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "network",
+              "value": "0.0.0.0/0",
+              "ip_version": 4,
+              "origin": [
+                "all"
+              ],
+              "note": null,
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a-ipmask",
+          "vdom": "root",
+          "category": "address",
+          "type": "ipmask",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "network",
+              "value": "10.0.1.0/24",
+              "ip_version": 4,
+              "origin": [
+                "a-ipmask"
+              ],
+              "note": null,
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a-hostbits",
+          "vdom": "root",
+          "category": "address",
+          "type": "ipmask",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "network",
+              "value": "10.0.1.0/24",
+              "ip_version": 4,
+              "origin": [
+                "a-hostbits"
+              ],
+              "note": "Hostbits gesetzt (10.0.1.5/24); als Netz 10.0.1.0/24 ausgewertet.",
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a-iprange",
+          "vdom": "root",
+          "category": "address",
+          "type": "iprange",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "range",
+              "value": "10.0.9.1-10.0.9.50",
+              "ip_version": 4,
+              "origin": [
+                "a-iprange"
+              ],
+              "note": null,
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a-fqdn",
+          "vdom": "root",
+          "category": "address",
+          "type": "fqdn",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "fqdn",
+              "value": "www.example.com",
+              "ip_version": 4,
+              "origin": [
+                "a-fqdn"
+              ],
+              "note": null,
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a-wildcard-contiguous",
+          "vdom": "root",
+          "category": "address",
+          "type": "wildcard",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "network",
+              "value": "10.8.0.0/16",
+              "ip_version": 4,
+              "origin": [
+                "a-wildcard-contiguous"
+              ],
+              "note": "Wildcard mit zusammenhängender Maske, als Netz dargestellt.",
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a-wildcard",
+          "vdom": "root",
+          "category": "address",
+          "type": "wildcard",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "unresolvable",
+              "value": "10.0.0.5/255.0.255.255",
+              "ip_version": 4,
+              "origin": [
+                "a-wildcard"
+              ],
+              "note": "Wildcard-Maske ist nicht zusammenhängend und lässt sich nicht als Netz oder Bereich darstellen.",
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a-geo",
+          "vdom": "root",
+          "category": "address",
+          "type": "geography",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "unresolvable",
+              "value": "DE",
+              "ip_version": 4,
+              "origin": [
+                "a-geo"
+              ],
+              "note": "Geo-Adresse (Land DE): Die Zuordnung zu IP-Adressen liegt nur in der Datenbank auf dem Gerät.",
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a-dynamic",
+          "vdom": "root",
+          "category": "address",
+          "type": "dynamic",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "unresolvable",
+              "value": "a-dynamic",
+              "ip_version": 4,
+              "origin": [
+                "a-dynamic"
+              ],
+              "note": "Dynamische Adresse (sub-type sdn, sdn cloud-connector, filter Tag.env=prod) wird erst auf dem Gerät aufgelöst.",
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a-ifsubnet",
+          "vdom": "root",
+          "category": "address",
+          "type": "interface-subnet",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "network",
+              "value": "10.0.2.0/24",
+              "ip_version": 4,
+              "origin": [
+                "a-ifsubnet"
+              ],
+              "note": "Netz des Interfaces port2.",
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a-ifsubnet-unknown",
+          "vdom": "root",
+          "category": "address",
+          "type": "interface-subnet",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "unresolvable",
+              "value": "a-ifsubnet-unknown",
+              "ip_version": 4,
+              "origin": [
+                "a-ifsubnet-unknown"
+              ],
+              "note": "Interface 'no-such-port' nicht gefunden oder ohne IP-Adresse.",
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a-mac",
+          "vdom": "root",
+          "category": "address",
+          "type": "mac",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "unresolvable",
+              "value": "00:11:22:33:44:55",
+              "ip_version": 4,
+              "origin": [
+                "a-mac"
+              ],
+              "note": "MAC-Adresse: kein IP-Wert, die Zuordnung erfolgt auf dem Gerät.",
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a-future-type",
+          "vdom": "root",
+          "category": "address",
+          "type": "something-new",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "unresolvable",
+              "value": "a-future-type",
+              "ip_version": 4,
+              "origin": [
+                "a-future-type"
+              ],
+              "note": "Unbekannter Adresstyp 'something-new'.",
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "all",
+          "vdom": "root",
+          "category": "address6",
+          "type": "ipprefix",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "network",
+              "value": "::/0",
+              "ip_version": 6,
+              "origin": [
+                "all"
+              ],
+              "note": null,
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a6-prefix",
+          "vdom": "root",
+          "category": "address6",
+          "type": "ipprefix",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "network",
+              "value": "2001:db8:1::/48",
+              "ip_version": 6,
+              "origin": [
+                "a6-prefix"
+              ],
+              "note": null,
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a6-range",
+          "vdom": "root",
+          "category": "address6",
+          "type": "iprange",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "range",
+              "value": "2001:db8:2::1-2001:db8:2::ff",
+              "ip_version": 6,
+              "origin": [
+                "a6-range"
+              ],
+              "note": null,
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "a6-fqdn",
+          "vdom": "root",
+          "category": "address6",
+          "type": "fqdn",
+          "members": [],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "fqdn",
+              "value": "v6.example.com",
+              "ip_version": 6,
+              "origin": [
+                "a6-fqdn"
+              ],
+              "note": null,
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        },
+        {
+          "name": "g6",
+          "vdom": "root",
+          "category": "addrgrp6",
+          "type": null,
+          "members": [
+            "a6-prefix",
+            "a6-range"
+          ],
+          "exclude_members": [],
+          "values": [
+            {
+              "kind": "network",
+              "value": "2001:db8:1::/48",
+              "ip_version": 6,
+              "origin": [
+                "g6",
+                "a6-prefix"
+              ],
+              "note": null,
+              "vip": null
+            },
+            {
+              "kind": "range",
+              "value": "2001:db8:2::1-2001:db8:2::ff",
+              "ip_version": 6,
+              "origin": [
+                "g6",
+                "a6-range"
+              ],
+              "note": null,
+              "vip": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        }
+      ],
+      "services": [
+        {
+          "name": "ALL",
+          "vdom": "root",
+          "category": "custom",
+          "protocol": "IP",
+          "members": [],
+          "entries": [
+            {
+              "kind": "ip",
+              "protocol": "IP",
+              "value": "IP alle Protokolle",
+              "dst_ports": null,
+              "src_ports": null,
+              "icmp_type": null,
+              "icmp_code": null,
+              "protocol_number": 0,
+              "origin": [
+                "ALL"
+              ],
+              "note": null
+            }
+          ],
+          "comment": null,
+          "unknown_keys": {}
+        }
+      ],
+      "vips": [],
+      "ippools": [],
+      "snat": []
+    }
+  ],
+  "coverage": {
+    "unprocessed_sections": [],
+    "unknown_keys": []
+  },
+  "notes": []
+}
