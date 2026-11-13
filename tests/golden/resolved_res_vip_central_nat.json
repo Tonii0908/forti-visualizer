@@ -6,8 +6,8 @@
     "firmware_type": "FW",
     "vdom_mode": "no-vdom",
     "input_name": "res_vip_central_nat.conf",
-    "input_sha256": "d8f716a3d2aa30fb2b0d3924c9873f512074644fbb83fe37e937b3aea89ea6ac",
-    "input_size_bytes": 2207
+    "input_sha256": "742f22a8e682c8c52be14fed2f4e09f4c613c836917985e2087af1e03e6a72f5",
+    "input_size_bytes": 2449
   },
   "interfaces": [
     {
@@ -149,8 +149,9 @@
                 "origin": [
                   "all"
                 ],
-                "note": null,
-                "vip": null
+                "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+                "vip": null,
+                "from_default": true
               }
             ]
           },
@@ -170,7 +171,8 @@
                   "srv-web"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -274,7 +276,8 @@
                   "net-lan"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -293,8 +296,9 @@
                 "origin": [
                   "all"
                 ],
-                "note": null,
-                "vip": null
+                "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+                "vip": null,
+                "from_default": true
               }
             ]
           },
@@ -348,8 +352,134 @@
         },
         {
           "vdom": "root",
-          "section": "implicit",
+          "section": "firewall policy",
           "position": 3,
+          "policy_id": "3",
+          "implicit": false,
+          "name": "inbound-any",
+          "uuid": null,
+          "status": "enable",
+          "enabled": true,
+          "action": "accept",
+          "ip_version": "4",
+          "src_interfaces": [
+            {
+              "name": "wan1",
+              "kind": "interface",
+              "zone": "wan1",
+              "vdom": "root"
+            }
+          ],
+          "dst_interfaces": [
+            {
+              "name": "port2",
+              "kind": "interface",
+              "zone": "port2",
+              "vdom": "root"
+            }
+          ],
+          "src_zones": [
+            "wan1"
+          ],
+          "dst_zones": [
+            "port2"
+          ],
+          "source": {
+            "objects": [
+              "all"
+            ],
+            "objects6": [],
+            "negate": false,
+            "internet_services": [],
+            "values": [
+              {
+                "kind": "network",
+                "value": "0.0.0.0/0",
+                "ip_version": 4,
+                "origin": [
+                  "all"
+                ],
+                "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+                "vip": null,
+                "from_default": true
+              }
+            ]
+          },
+          "destination": {
+            "objects": [
+              "all"
+            ],
+            "objects6": [],
+            "negate": false,
+            "internet_services": [],
+            "values": [
+              {
+                "kind": "network",
+                "value": "0.0.0.0/0",
+                "ip_version": 4,
+                "origin": [
+                  "all"
+                ],
+                "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+                "vip": null,
+                "from_default": true
+              }
+            ]
+          },
+          "service": {
+            "objects": [
+              "HTTPS"
+            ],
+            "negate": false,
+            "entries": [
+              {
+                "kind": "ports",
+                "protocol": "TCP",
+                "value": "TCP/443",
+                "dst_ports": "443",
+                "src_ports": null,
+                "icmp_type": null,
+                "icmp_code": null,
+                "protocol_number": null,
+                "origin": [
+                  "HTTPS"
+                ],
+                "note": null
+              }
+            ]
+          },
+          "nat": {
+            "enabled": false,
+            "ippool": false,
+            "pools": [],
+            "mode": "central"
+          },
+          "users": [],
+          "groups": [],
+          "schedule": "always",
+          "logtraffic": "utm",
+          "profiles": {},
+          "comments": null,
+          "line": 98,
+          "notes": [
+            "Central NAT: Das Ziel 0.0.0.0/0 umfasst alle VIPs mit passendem extintf (1: vip-web); sie wirken auf diese Regel ohne Verweis in der Policy."
+          ],
+          "defaults_applied": [
+            "srcaddr-negate",
+            "internet-service-src",
+            "dstaddr-negate",
+            "internet-service",
+            "service-negate",
+            "nat",
+            "status",
+            "logtraffic"
+          ],
+          "unknown_keys": {}
+        },
+        {
+          "vdom": "root",
+          "section": "implicit",
+          "position": 4,
           "policy_id": "0",
           "implicit": true,
           "name": "Implizites Deny",
@@ -392,7 +522,8 @@
                 "ip_version": 4,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -408,7 +539,8 @@
                 "ip_version": 4,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -466,8 +598,9 @@
               "origin": [
                 "all"
               ],
-              "note": null,
-              "vip": null
+              "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+              "vip": null,
+              "from_default": true
             }
           ],
           "comment": null,
@@ -489,7 +622,8 @@
                 "srv-web"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -511,7 +645,8 @@
                 "net-dmz"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -533,7 +668,8 @@
                 "net-lan"
               ],
               "note": null,
-              "vip": null
+              "vip": null,
+              "from_default": false
             }
           ],
           "comment": null,
@@ -576,7 +712,8 @@
                   "protocol"
                 ],
                 "unknown_keys": {}
-              }
+              },
+              "from_default": false
             }
           ],
           "comment": null,
@@ -705,7 +842,8 @@
                   "net-dmz"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -724,8 +862,9 @@
                 "origin": [
                   "all"
                 ],
-                "note": null,
-                "vip": null
+                "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+                "vip": null,
+                "from_default": true
               }
             ]
           },
@@ -796,7 +935,8 @@
                   "net-lan"
                 ],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -815,8 +955,9 @@
                 "origin": [
                   "all"
                 ],
-                "note": null,
-                "vip": null
+                "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+                "vip": null,
+                "from_default": true
               }
             ]
           },

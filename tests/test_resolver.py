@@ -589,3 +589,52 @@ def test_resolve_single_policy_object():
     policy = loaded.vdoms[0].objects("firewall policy")[0]
     result = resolver.resolve(policy)
     assert (result.policy_id, result.action, result.status) == ("1", "deny", "enable")
+
+
+# --- follow-ups after stage 2 review ---------------------------------------------
+
+
+def test_address_without_subnet_gets_default_note():
+    root = load("res_virtual_wan_link.conf").vdom("root")
+    p = root.policy("1")
+    (src,) = p.source.values
+    assert src.value == "0.0.0.0/0" and src.kind == "network"
+    assert src.from_default
+    assert "kein subnet im Backup, FortiOS-Default" in src.note
+    (dst,) = p.destination.values
+    assert dst.from_default  # 'all' without subnet looks the same in the backup
+    objs = {(a.category, a.name): a for a in root.addresses}
+    v6 = objs[("address6", "all")].values[0]
+    assert v6.value == "::/0" and v6.from_default and "ip6" in v6.note
+
+
+def test_explicit_subnet_has_no_default_flag(types):
+    p = types.vdom("root").policy("1")
+    assert not any(v.from_default for v in p.source.values)
+
+
+def test_central_nat_any_destination_single_note(central):
+    p = central.vdom("root").policy("3")
+    vip_notes = [n for n in p.notes if "VIP" in n]
+    assert len(vip_notes) == 1
+    assert "0.0.0.0/0" in vip_notes[0] and "vip-web" in vip_notes[0]
+    assert "alle VIPs" in vip_notes[0]
+    # lan-out has destination 'all' too, but no VIP has a matching extintf.
+    assert not any("VIP" in n for n in central.vdom("root").policy("2").notes)
+
+
+def test_virtual_wan_link_like_sdwan():
+    resolved = load("res_virtual_wan_link.conf")
+    p = resolved.vdom("root").policy("1")
+    assert [(i.name, i.kind, i.zone) for i in p.dst_interfaces] == [
+        ("virtual-wan-link", "sdwan-zone", "virtual-wan-link")
+    ]
+    by_name = {i.name: i for i in resolved.interfaces}
+    assert by_name["wan1"].zone == "virtual-wan-link"
+    assert by_name["wan2"].zone == "virtual-wan-link"
+    assert by_name["virtual-wan-link"].members == ["wan1", "wan2"]
+    keys = {(k.section, k.key) for k in resolved.coverage.unknown_keys}
+    assert ("system virtual-wan-link", "config health-check") in keys
+    assert ("system virtual-wan-link > members", "gateway") in keys
+    sections = {s.path for s in resolved.coverage.unprocessed_sections}
+    assert "system virtual-wan-link" not in sections

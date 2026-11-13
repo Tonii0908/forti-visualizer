@@ -77,6 +77,16 @@ def _add_note(value: ResolvedValue, note: str) -> None:
     value.note = f"{value.note} {note}" if value.note else note
 
 
+def _mark_default(value: ResolvedValue, note: str) -> None:
+    """Flag a value that only exists because the backup leaves the key out."""
+    value.from_default = True
+    _add_note(
+        value,
+        f"{note}. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; "
+        "der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+    )
+
+
 def _unresolvable(value: str, origin: list[str], note: str, ip_version: int | None = None) -> ResolvedValue:
     return ResolvedValue(kind="unresolvable", value=value, origin=list(origin), note=note, ip_version=ip_version)
 
@@ -300,6 +310,15 @@ class Resolver:
                     intrazone=_one(_get(obj, "intrazone", used)),
                 ),
             )
+        for vwl in ctx.loaded.objects("system virtual-wan-link"):
+            # ASSUMPTION(A7): before 6.4 all members form the interface 'virtual-wan-link'.
+            zone = ctx.sdwan_zones.setdefault(
+                "virtual-wan-link", ZoneInfo(name="virtual-wan-link", vdom=ctx.name, kind="sdwan-zone")
+            )
+            for member in vwl.subsections.get("system virtual-wan-link > members", []):
+                interface = _one(member.raw("interface"))
+                if interface is not None:
+                    zone.interfaces.append(interface)
         for sdwan in ctx.loaded.objects("system sdwan"):
             for zone in sdwan.subsections.get("system sdwan > zone", []):
                 ctx.sdwan_zones.setdefault(zone.name, ZoneInfo(name=zone.name, vdom=ctx.name, kind="sdwan-zone"))
@@ -325,6 +344,8 @@ class Resolver:
         # SD-WAN zones are listed as interfaces of type "SD-WAN-Zone".
         for ctx in self.contexts.values():
             for zone in ctx.sdwan_zones.values():
+                if any(i.name == zone.name and i.vdom == ctx.name for i in self.interfaces):
+                    continue
                 self.interfaces.append(
                     InterfaceInfo(
                         name=zone.name,
@@ -390,7 +411,10 @@ class Resolver:
         kind = _one(_get(obj, "type", used))
         name = obj.name or ""
         if kind == "ipmask":
-            return [_network_value(_get(obj, "subnet", used) or [], origin)]
+            value = _network_value(_get(obj, "subnet", used) or [], origin)
+            if "subnet" in used:
+                _mark_default(value, "kein subnet im Backup, FortiOS-Default 0.0.0.0/0")
+            return [value]
         if kind == "iprange":
             return [_range_value(_one(obj.raw("start-ip")), _one(obj.raw("end-ip")), origin, name)]
         if kind == "fqdn":
@@ -477,7 +501,10 @@ class Resolver:
         kind = _one(_get(obj, "type", used))
         name = obj.name or ""
         if kind == "ipprefix":
-            return [_network_value(_get(obj, "ip6", used) or [], origin)]
+            value = _network_value(_get(obj, "ip6", used) or [], origin)
+            if "ip6" in used:
+                _mark_default(value, "kein ip6 im Backup, FortiOS-Default ::/0")
+            return [value]
         if kind == "iprange":
             return [_range_value(_one(obj.raw("start-ip")), _one(obj.raw("end-ip")), origin, name)]
         if kind == "fqdn":
@@ -767,12 +794,25 @@ class Resolver:
         if ctx.central_nat:
             if any(v.kind == "vip" for v in destination.values):
                 notes.append("Die Regel verweist auf eine VIP, obwohl Central NAT aktiv ist.")
-            for vip in ctx.vips.values():
-                if self._vip_applies(vip, src_refs, destination.values):
-                    notes.append(
-                        f"Central NAT: VIP '{vip.name}' ({vip.value}) übersetzt auf ein Ziel dieser Regel; "
-                        "die Übersetzung wirkt ohne Verweis in der Policy."
-                    )
+            matching = [vip for vip in ctx.vips.values() if self._vip_intf_matches(vip, src_refs)]
+            any_dst = any(
+                v.kind == "network" and v.ip_version == 4 and v.value.endswith("/0") for v in destination.values
+            )
+            if any_dst and matching:
+                names = ", ".join(vip.name for vip in matching[:10])
+                if len(matching) > 10:
+                    names += f" und {len(matching) - 10} weitere"
+                notes.append(
+                    "Central NAT: Das Ziel 0.0.0.0/0 umfasst alle VIPs mit passendem extintf "
+                    f"({len(matching)}: {names}); sie wirken auf diese Regel ohne Verweis in der Policy."
+                )
+            else:
+                for vip in matching:
+                    if self._vip_overlaps(vip, destination.values):
+                        notes.append(
+                            f"Central NAT: VIP '{vip.name}' ({vip.value}) übersetzt auf ein Ziel dieser Regel; "
+                            "die Übersetzung wirkt ohne Verweis in der Policy."
+                        )
 
         action = _one(_get(policy, "action", used)) or ""
         status = _one(_get(policy, "status", used)) or ""
@@ -808,11 +848,14 @@ class Resolver:
             unknown_keys=dict(policy.unknown_keys),
         )
 
-    def _vip_applies(self, vip: VipMapping, src_refs: list[InterfaceRef], dst_values: list[ResolvedValue]) -> bool:
-        if vip.ext_intf not in (None, "any") and not any(
+    @staticmethod
+    def _vip_intf_matches(vip: VipMapping, src_refs: list[InterfaceRef]) -> bool:
+        return vip.ext_intf in (None, "any") or any(
             r.kind == "any" or r.name == vip.ext_intf or r.zone == vip.ext_intf for r in src_refs
-        ):
-            return False
+        )
+
+    @staticmethod
+    def _vip_overlaps(vip: VipMapping, dst_values: list[ResolvedValue]) -> bool:
         mapped: list[tuple[int, int]] = []
         for text in vip.mapped_ips:
             try:

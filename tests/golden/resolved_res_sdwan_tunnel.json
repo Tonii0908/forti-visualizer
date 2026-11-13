@@ -211,8 +211,9 @@
                 "origin": [
                   "all"
                 ],
-                "note": null,
-                "vip": null
+                "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+                "vip": null,
+                "from_default": true
               }
             ]
           },
@@ -231,8 +232,9 @@
                 "origin": [
                   "all"
                 ],
-                "note": null,
-                "vip": null
+                "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+                "vip": null,
+                "from_default": true
               }
             ]
           },
@@ -333,8 +335,9 @@
                 "origin": [
                   "all"
                 ],
-                "note": null,
-                "vip": null
+                "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+                "vip": null,
+                "from_default": true
               }
             ]
           },
@@ -353,8 +356,9 @@
                 "origin": [
                   "all"
                 ],
-                "note": null,
-                "vip": null
+                "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+                "vip": null,
+                "from_default": true
               }
             ]
           },
@@ -462,8 +466,9 @@
                 "origin": [
                   "all"
                 ],
-                "note": null,
-                "vip": null
+                "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+                "vip": null,
+                "from_default": true
               }
             ]
           },
@@ -482,8 +487,9 @@
                 "origin": [
                   "all"
                 ],
-                "note": null,
-                "vip": null
+                "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+                "vip": null,
+                "from_default": true
               }
             ]
           },
@@ -586,8 +592,9 @@
                 "origin": [
                   "all"
                 ],
-                "note": null,
-                "vip": null
+                "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+                "vip": null,
+                "from_default": true
               }
             ]
           },
@@ -606,8 +613,9 @@
                 "origin": [
                   "all"
                 ],
-                "note": null,
-                "vip": null
+                "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+                "vip": null,
+                "from_default": true
               }
             ]
           },
@@ -705,7 +713,8 @@
                 "ip_version": 4,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -721,7 +730,8 @@
                 "ip_version": 4,
                 "origin": [],
                 "note": null,
-                "vip": null
+                "vip": null,
+                "from_default": false
               }
             ]
           },
@@ -779,8 +789,9 @@
               "origin": [
                 "all"
               ],
-              "note": null,
-              "vip": null
+              "note": "kein subnet im Backup, FortiOS-Default 0.0.0.0/0. Sonderobjekte wie FABRIC_DEVICE stehen ebenfalls ohne Netz im Backup; der tatsächliche Inhalt ist nur auf dem Gerät sichtbar.",
+              "vip": null,
+              "from_default": true
             }
           ],
           "comment": null,

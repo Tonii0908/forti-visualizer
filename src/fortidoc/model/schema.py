@@ -67,6 +67,9 @@ class ResolvedValue(BaseModel):
     origin: list[str] = Field(default_factory=list)  # object chain, outermost first
     note: str | None = None
     vip: VipMapping | None = None
+    # True when the value is the FortiOS default because the backup has no
+    # subnet/ip6 for the object (e.g. 'all' or special objects like FABRIC_DEVICE).
+    from_default: bool = False
 
 
 class AddressSide(BaseModel):
@@ -241,6 +244,21 @@ class SnatRule(BaseModel):
     notes: list[str] = Field(default_factory=list)
     defaults_applied: list[str] = Field(default_factory=list)
     unknown_keys: dict[str, list[str]] = Field(default_factory=dict)
+
+
+# ---------------------------------------------------------------------------
+# Findings ("Auffälligkeiten")
+# ---------------------------------------------------------------------------
+
+
+class Finding(BaseModel):
+    category: str
+    vdom: str | None = None
+    object_kind: str  # "Regel", "Adresse", "Dienst", ...
+    position: int | None = None
+    ref: str  # policy ID or object name
+    name: str | None = None
+    detail: str
 
 
 # ---------------------------------------------------------------------------
